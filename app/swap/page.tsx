@@ -2,13 +2,12 @@
 
 import * as React from "react";
 import { useAccount, useSendTransaction } from "wagmi";
-import { parseEther, parseUnits } from "viem";
+import { parseEther } from "viem";
 import { useQueryClient } from "@tanstack/react-query";
 import { useWalletStore } from "@/stores/use-wallet-store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { 
   ArrowLeftRight, 
   ArrowDown, 
@@ -149,19 +148,19 @@ export default function SwapPage() {
   return (
     <div className="max-w-xl mx-auto space-y-6">
       <div className="text-center space-y-1">
-        <h1 className="text-2xl font-bold text-white tracking-tight flex items-center justify-center gap-2">
-          <ArrowLeftRight className="h-6 w-6 text-emerald-400" />
+        <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center justify-center gap-2">
+          <ArrowLeftRight className="h-6 w-6 text-emerald-600" />
           Testnet Swap & Bridge
         </h1>
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-slate-500">
           Live liquidity aggregation powered by 0x Swap API on testnets.
         </p>
       </div>
 
-      <Card className="glass-card">
+      <Card className="bg-white border-slate-200/90 shadow-md">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-semibold text-slate-300 flex items-center gap-1.5">
-            <Zap className="h-4 w-4 text-emerald-400" />
+          <CardTitle className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+            <Zap className="h-4 w-4 text-emerald-600" />
             0x Testnet Quoter
           </CardTitle>
           <div className="flex items-center gap-1.5">
@@ -170,10 +169,10 @@ export default function SwapPage() {
                 key={s}
                 type="button"
                 onClick={() => setSlippage(s)}
-                className={`px-2 py-0.5 text-[11px] rounded-lg border transition-all ${
+                className={`px-2 py-0.5 text-[11px] rounded-lg border font-semibold transition-all cursor-pointer ${
                   slippage === s
-                    ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
-                    : "border-slate-800 text-slate-400 hover:text-white"
+                    ? "bg-emerald-50 text-emerald-800 border-emerald-300 shadow-2xs"
+                    : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                 }`}
               >
                 {s}%
@@ -184,8 +183,8 @@ export default function SwapPage() {
 
         <CardContent className="space-y-3 pt-2">
           {/* Pay Input */}
-          <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 space-y-2">
-            <div className="flex items-center justify-between text-xs text-slate-400">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 space-y-2">
+            <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
               <span>You Pay</span>
               <span>Network: {fromToken.chain}</span>
             </div>
@@ -195,7 +194,7 @@ export default function SwapPage() {
                 step="any"
                 value={fromAmount}
                 onChange={(e) => setFromAmount(e.target.value)}
-                className="bg-transparent border-0 text-2xl font-mono text-white p-0 focus-visible:ring-0"
+                className="bg-transparent border-0 text-2xl font-mono text-slate-900 p-0 focus-visible:ring-0 shadow-none font-bold"
               />
               <select
                 value={fromToken.symbol}
@@ -203,7 +202,7 @@ export default function SwapPage() {
                   const found = TOKENS.find((t) => t.symbol === e.target.value);
                   if (found) setFromToken(found);
                 }}
-                className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-xs font-semibold text-white focus:outline-none"
+                className="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-800 focus:outline-none shadow-2xs cursor-pointer"
               >
                 {TOKENS.map((t) => (
                   <option key={t.symbol} value={t.symbol}>{t.symbol} ({t.chain})</option>
@@ -217,20 +216,20 @@ export default function SwapPage() {
             <button
               type="button"
               onClick={handleInvert}
-              className="h-9 w-9 rounded-full bg-slate-800 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700 flex items-center justify-center shadow-lg transition-transform active:rotate-180 duration-200"
+              className="h-9 w-9 rounded-full bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 flex items-center justify-center shadow-md transition-transform active:rotate-180 duration-200 cursor-pointer"
             >
               <ArrowDown className="h-4 w-4" />
             </button>
           </div>
 
           {/* Receive Output */}
-          <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 space-y-2">
-            <div className="flex items-center justify-between text-xs text-slate-400">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 space-y-2">
+            <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
               <span>You Receive</span>
               <span className="flex items-center gap-1">
                 {quoteLoading ? (
                   <>
-                    <Loader2 className="h-3 w-3 animate-spin text-emerald-400" />
+                    <Loader2 className="h-3 w-3 animate-spin text-emerald-600" />
                     Fetching 0x Quote...
                   </>
                 ) : (
@@ -239,14 +238,14 @@ export default function SwapPage() {
               </span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-2xl font-mono text-white flex-1">{toAmount}</span>
+              <span className="text-2xl font-mono text-slate-900 flex-1 font-bold">{toAmount}</span>
               <select
                 value={toToken.symbol}
                 onChange={(e) => {
                   const found = TOKENS.find((t) => t.symbol === e.target.value);
                   if (found) setToToken(found);
                 }}
-                className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-xs font-semibold text-white focus:outline-none"
+                className="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-800 focus:outline-none shadow-2xs cursor-pointer"
               >
                 {TOKENS.map((t) => (
                   <option key={t.symbol} value={t.symbol}>{t.symbol} ({t.chain})</option>
@@ -256,28 +255,28 @@ export default function SwapPage() {
           </div>
 
           {/* Exchange Details */}
-          <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-3 space-y-1.5 text-xs text-slate-400">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-1.5 text-xs text-slate-600">
             <div className="flex justify-between">
               <span>Estimated Gas Fee:</span>
-              <span className="font-mono text-slate-300">{gasEstimate}</span>
+              <span className="font-mono text-slate-800 font-medium">{gasEstimate}</span>
             </div>
             <div className="flex justify-between">
               <span>Slippage Tolerance:</span>
-              <span className="text-slate-300">{slippage}%</span>
+              <span className="text-slate-800 font-medium">{slippage}%</span>
             </div>
             <div className="flex justify-between">
               <span>Route Source:</span>
-              <span className="text-emerald-400 font-mono">0x API (v2 testnet)</span>
+              <span className="text-emerald-700 font-mono font-semibold">0x API (v2 testnet)</span>
             </div>
           </div>
 
           {txHash && (
-            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 space-y-2 text-xs text-emerald-400">
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 space-y-2 text-xs text-emerald-800">
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 shrink-0" />
-                <span className="font-medium">Swap broadcast successfully!</span>
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+                <span className="font-bold">Swap broadcast successfully!</span>
               </div>
-              <div className="font-mono text-[11px] break-all bg-slate-950/60 p-2 rounded border border-slate-800 text-slate-300">
+              <div className="font-mono text-[11px] break-all bg-white p-2 rounded-lg border border-emerald-200 text-slate-800">
                 {txHash}
               </div>
               {explorerUrl && (
@@ -285,7 +284,7 @@ export default function SwapPage() {
                   href={explorerUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1 text-cyan-400 hover:underline pt-1"
+                  className="inline-flex items-center gap-1 text-sky-600 hover:text-sky-700 font-semibold hover:underline pt-1"
                 >
                   <span>View on Explorer</span>
                   <ExternalLink className="h-3 w-3" />
@@ -295,7 +294,7 @@ export default function SwapPage() {
           )}
 
           {error && (
-            <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-400 flex items-center gap-2">
+            <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700 flex items-center gap-2">
               <AlertCircle className="h-4 w-4 shrink-0" />
               <span>{error}</span>
             </div>
@@ -303,7 +302,7 @@ export default function SwapPage() {
 
           <Button
             variant="gradient"
-            className="w-full h-12 text-sm font-semibold rounded-xl"
+            className="w-full h-12 text-sm font-semibold rounded-xl shadow-md shadow-emerald-600/20 cursor-pointer"
             onClick={handleSwap}
             disabled={swapLoading || quoteLoading}
           >

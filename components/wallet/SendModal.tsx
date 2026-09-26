@@ -95,26 +95,26 @@ export function SendModal() {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className="flex items-center gap-2 mb-1">
-            <div className="h-8 w-8 rounded-xl bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
-              <ArrowUpRight className="h-4 w-4 text-emerald-400" />
+            <div className="h-8 w-8 rounded-xl bg-emerald-50 flex items-center justify-center border border-emerald-200">
+              <ArrowUpRight className="h-4 w-4 text-emerald-600" />
             </div>
-            <DialogTitle className="text-xl">Send Testnet Assets</DialogTitle>
+            <DialogTitle className="text-xl font-bold text-slate-900">Send Testnet Assets</DialogTitle>
           </div>
-          <DialogDescription>
+          <DialogDescription className="text-xs sm:text-sm text-slate-500">
             Transfer native testnet tokens on {selectedNetwork.toUpperCase()}.
           </DialogDescription>
         </DialogHeader>
 
         {txHash ? (
           <div className="space-y-4 py-4 text-center">
-            <div className="h-14 w-14 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto border border-emerald-500/30">
+            <div className="h-14 w-14 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-200">
               <CheckCircle2 className="h-8 w-8" />
             </div>
             <div>
-              <h4 className="font-semibold text-white text-base">Transaction Submitted</h4>
-              <p className="text-xs text-slate-400 mt-1">Successfully broadcast to the testnet blockchain.</p>
+              <h4 className="font-semibold text-slate-900 text-base">Transaction Submitted</h4>
+              <p className="text-xs text-slate-500 mt-1">Successfully broadcast to the testnet blockchain.</p>
             </div>
-            <div className="bg-slate-950 rounded-xl p-3 border border-slate-800 break-all text-xs font-mono text-emerald-400">
+            <div className="bg-slate-50 rounded-xl p-3 border border-slate-200 break-all text-xs font-mono text-emerald-800">
               {txHash}
             </div>
             {explorerUrl && (
@@ -122,7 +122,7 @@ export function SendModal() {
                 href={explorerUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs text-cyan-400 hover:underline"
+                className="inline-flex items-center gap-1.5 text-xs text-sky-600 hover:text-sky-700 font-medium hover:underline"
               >
                 <span>View on Block Explorer</span>
                 <ExternalLink className="h-3 w-3" />
@@ -135,7 +135,7 @@ export function SendModal() {
         ) : (
           <form onSubmit={handleSend} className="space-y-4 py-2">
             <div>
-              <label className="text-xs font-medium text-slate-300 mb-1.5 block">
+              <label className="text-xs font-semibold text-slate-700 mb-1.5 block">
                 Recipient Address
               </label>
               <Input
@@ -148,11 +148,11 @@ export function SendModal() {
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-medium text-slate-300">Amount</label>
+                <label className="text-xs font-semibold text-slate-700">Amount</label>
                 <button
                   type="button"
                   onClick={() => setAmount("0.005")}
-                  className="text-xs text-emerald-400 hover:underline"
+                  className="text-xs font-medium text-emerald-700 hover:underline cursor-pointer"
                 >
                   Quick Amount (0.005)
                 </button>
@@ -166,25 +166,25 @@ export function SendModal() {
                   onChange={(e) => setAmount(e.target.value)}
                   className="font-mono pr-16"
                 />
-                <span className="absolute right-3 top-3 text-xs font-semibold text-slate-400 uppercase">
+                <span className="absolute right-3 top-3 text-xs font-semibold text-slate-500 uppercase">
                   {selectedNetwork === "amoy" ? "POL" : selectedNetwork === "bsc_testnet" ? "BNB" : "ETH"}
                 </span>
               </div>
             </div>
 
-            <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3 space-y-1.5 text-xs text-slate-400">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-1.5 text-xs text-slate-600">
               <div className="flex justify-between">
                 <span>Network:</span>
-                <span className="text-slate-200 font-mono capitalize">{selectedNetwork.replace("_", " ")}</span>
+                <span className="text-slate-800 font-mono capitalize font-medium">{selectedNetwork.replace("_", " ")}</span>
               </div>
               <div className="flex justify-between">
                 <span>Confirmation Time:</span>
-                <span className="text-emerald-400">~12 seconds</span>
+                <span className="text-emerald-700 font-medium">~12 seconds</span>
               </div>
             </div>
 
             {error && (
-              <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-400 flex items-center gap-2">
+              <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700 flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 <span>{error}</span>
               </div>
@@ -193,7 +193,7 @@ export function SendModal() {
             <Button
               type="submit"
               variant="gradient"
-              className="w-full h-11"
+              className="w-full h-11 font-semibold"
               disabled={loading}
             >
               {loading ? (

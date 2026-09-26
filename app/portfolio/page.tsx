@@ -32,11 +32,11 @@ export default function PortfolioPage() {
       {/* Header with quick summary & refresh */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-            <WalletCards className="h-6 w-6 text-emerald-400" />
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+            <WalletCards className="h-6 w-6 text-emerald-600" />
             Multi-Chain Portfolio
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Real-time aggregated view of your on-chain testnet assets across 4 EVM networks.
           </p>
         </div>
@@ -47,7 +47,7 @@ export default function PortfolioPage() {
             size="sm"
             onClick={() => refetch()}
             disabled={isRefetching}
-            className="text-xs text-slate-300 border-slate-700"
+            className="text-xs text-slate-700 border-slate-200 bg-white hover:bg-slate-50 shadow-2xs font-semibold cursor-pointer"
           >
             <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isRefetching ? "animate-spin" : ""}`} />
             Refresh Balances
@@ -56,7 +56,7 @@ export default function PortfolioPage() {
             variant="gradient"
             size="sm"
             onClick={() => setSendOpen(true)}
-            className="text-xs"
+            className="text-xs font-semibold shadow-2xs cursor-pointer"
           >
             <ArrowUpRight className="h-4 w-4 mr-1" /> Send
           </Button>
@@ -64,30 +64,30 @@ export default function PortfolioPage() {
             variant="secondary"
             size="sm"
             onClick={() => setReceiveOpen(true)}
-            className="text-xs"
+            className="text-xs font-semibold border-slate-200 bg-white hover:bg-slate-50 text-slate-800 shadow-2xs cursor-pointer"
           >
-            <ArrowDownLeft className="h-4 w-4 mr-1 text-cyan-400" /> Receive
+            <ArrowDownLeft className="h-4 w-4 mr-1 text-sky-600" /> Receive
           </Button>
         </div>
       </div>
 
       {/* Allocation breakdown bar */}
-      <Card className="glass">
+      <Card className="bg-white border-slate-200/90 shadow-xs">
         <CardContent className="pt-5 pb-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-              <PieChart className="h-4 w-4 text-emerald-400" />
+            <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+              <PieChart className="h-4 w-4 text-emerald-600" />
               Dynamic Asset Allocation
             </span>
-            <span className="text-xs font-mono text-emerald-400 font-semibold">
+            <span className="text-xs font-mono text-emerald-700 font-bold">
               {formatUsd(totalUsd)} Total
             </span>
           </div>
 
-          <div className="h-3 w-full rounded-full bg-slate-800 flex overflow-hidden gap-0.5">
+          <div className="h-3 w-full rounded-full bg-slate-100 flex overflow-hidden gap-0.5 border border-slate-200">
             {balances.map((b, idx) => {
               const pct = totalUsd > 0 ? (b.usdValue / totalUsd) * 100 : 25;
-              const colors = ["bg-emerald-500", "bg-purple-500", "bg-amber-500", "bg-cyan-500"];
+              const colors = ["bg-emerald-500", "bg-purple-500", "bg-amber-500", "bg-sky-500"];
               return (
                 <div
                   key={b.chainId}
@@ -99,10 +99,10 @@ export default function PortfolioPage() {
             })}
           </div>
 
-          <div className="flex flex-wrap gap-4 mt-3 text-[11px] text-slate-400">
+          <div className="flex flex-wrap gap-4 mt-3 text-[11px] text-slate-500 font-medium">
             {balances.map((b, idx) => {
               const pct = totalUsd > 0 ? ((b.usdValue / totalUsd) * 100).toFixed(1) : "0";
-              const colors = ["bg-emerald-500", "bg-purple-500", "bg-amber-500", "bg-cyan-500"];
+              const colors = ["bg-emerald-500", "bg-purple-500", "bg-amber-500", "bg-sky-500"];
               return (
                 <span key={b.chainId} className="flex items-center gap-1.5">
                   <span className={`h-2 w-2 rounded-full ${colors[idx % colors.length]}`} />
@@ -115,17 +115,17 @@ export default function PortfolioPage() {
       </Card>
 
       {/* Asset Table */}
-      <Card className="glass">
+      <Card className="bg-white border-slate-200/90 shadow-xs">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center justify-between">
+          <CardTitle className="text-base font-bold text-slate-900 flex items-center justify-between">
             <span>Testnet Holdings</span>
-            {isLoading && <Loader2 className="h-4 w-4 animate-spin text-emerald-400" />}
+            {isLoading && <Loader2 className="h-4 w-4 animate-spin text-emerald-600" />}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="border-b border-slate-800 text-slate-400 font-medium uppercase tracking-wider">
+              <thead className="border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider">
                 <tr>
                   <th className="pb-3 pl-2">Asset</th>
                   <th className="pb-3">Chain</th>
@@ -134,16 +134,16 @@ export default function PortfolioPage() {
                   <th className="pb-3 text-right pr-2">Total Value</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-slate-100">
                 {balances.map((asset) => (
-                  <tr key={asset.chainId} className="hover:bg-slate-800/30 transition-colors">
-                    <td className="py-3.5 pl-2 font-medium text-white flex items-center gap-2.5">
-                      <div className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center font-bold text-[11px] border border-slate-700">
+                  <tr key={asset.chainId} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="py-3.5 pl-2 font-semibold text-slate-900 flex items-center gap-2.5">
+                      <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-[11px] text-slate-700 border border-slate-200">
                         {asset.symbol}
                       </div>
                       <div>
                         <div>{asset.chainName}</div>
-                        <div className="text-[10px] text-slate-500 uppercase">{asset.symbol}</div>
+                        <div className="text-[10px] text-slate-400 uppercase font-medium">{asset.symbol}</div>
                       </div>
                     </td>
                     <td className="py-3.5">
@@ -151,11 +151,11 @@ export default function PortfolioPage() {
                         {asset.chainId.replace("_", " ")}
                       </Badge>
                     </td>
-                    <td className="py-3.5 text-slate-300 font-mono">${asset.usdPrice}</td>
-                    <td className="py-3.5 text-right font-mono font-medium text-white">
+                    <td className="py-3.5 text-slate-600 font-mono font-medium">${asset.usdPrice}</td>
+                    <td className="py-3.5 text-right font-mono font-semibold text-slate-900">
                       {asset.balance} {asset.symbol}
                     </td>
-                    <td className="py-3.5 text-right font-mono font-semibold text-emerald-400 pr-2">
+                    <td className="py-3.5 text-right font-mono font-bold text-emerald-700 pr-2">
                       {formatUsd(asset.usdValue)}
                     </td>
                   </tr>
@@ -167,25 +167,25 @@ export default function PortfolioPage() {
       </Card>
 
       {/* Recent Activity */}
-      <Card className="glass">
+      <Card className="bg-white border-slate-200/90 shadow-xs">
         <CardHeader className="flex flex-row items-center justify-between pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Clock className="h-4 w-4 text-cyan-400" />
+          <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+            <Clock className="h-4 w-4 text-sky-600" />
             Recent Testnet Activity
           </CardTitle>
           <Badge variant="secondary" className="text-[10px]">Neon DB Synced</Badge>
         </CardHeader>
         <CardContent>
-          <div className="divide-y divide-slate-800/60">
+          <div className="divide-y divide-slate-100">
             {RECENT_TRANSACTIONS.map((tx) => (
-              <div key={tx.id} className="py-3 flex items-center justify-between text-xs">
+              <div key={tx.id} className="py-3.5 flex items-center justify-between text-xs">
                 <div>
-                  <div className="font-semibold text-white">{tx.type} • {tx.asset}</div>
-                  <div className="text-[11px] text-slate-400 mt-0.5">{tx.chain} • {tx.from}</div>
+                  <div className="font-semibold text-slate-900">{tx.type} • {tx.asset}</div>
+                  <div className="text-[11px] text-slate-500 mt-0.5">{tx.chain} • {tx.from}</div>
                 </div>
                 <div className="text-right">
                   <Badge variant="default" className="text-[10px]">{tx.status}</Badge>
-                  <div className="text-[10px] text-slate-500 mt-1">{tx.time}</div>
+                  <div className="text-[10px] text-slate-400 mt-1 font-medium">{tx.time}</div>
                 </div>
               </div>
             ))}

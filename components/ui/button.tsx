@@ -4,23 +4,23 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98] select-none",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98] select-none cursor-pointer",
   {
     variants: {
       variant: {
-        default: "bg-emerald-500 text-slate-950 font-semibold hover:bg-emerald-400 shadow-md shadow-emerald-500/20",
-        destructive: "bg-red-500 text-white hover:bg-red-600 shadow-md shadow-red-500/20",
-        outline: "border border-slate-700 bg-transparent hover:bg-slate-800 text-slate-200",
-        secondary: "bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700/60",
-        ghost: "hover:bg-slate-800/80 text-slate-300 hover:text-white",
-        link: "text-emerald-400 underline-offset-4 hover:underline",
-        gradient: "bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 text-slate-950 font-semibold hover:opacity-95 shadow-lg shadow-emerald-500/25",
+        default: "bg-emerald-600 text-white font-medium hover:bg-emerald-700 shadow-sm shadow-emerald-600/20",
+        destructive: "bg-red-600 text-white hover:bg-red-700 shadow-sm shadow-red-600/20",
+        outline: "border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-xs",
+        secondary: "bg-slate-100 text-slate-800 hover:bg-slate-200/80 border border-slate-200/80 shadow-2xs",
+        ghost: "hover:bg-slate-100 text-slate-600 hover:text-slate-900",
+        link: "text-emerald-600 underline-offset-4 hover:underline",
+        gradient: "bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 text-white font-semibold hover:opacity-95 shadow-md shadow-emerald-600/20",
       },
       size: {
-        default: "h-11 px-4 py-2",
-        sm: "h-9 rounded-lg px-3 text-xs",
-        lg: "h-12 rounded-xl px-6 text-base",
-        icon: "h-11 w-11",
+        default: "h-10 px-4 py-2",
+        sm: "h-8 rounded-lg px-3 text-xs",
+        lg: "h-11 rounded-xl px-6 text-sm font-medium",
+        icon: "h-10 w-10",
       },
     },
     defaultVariants: {

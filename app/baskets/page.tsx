@@ -8,7 +8,6 @@ import { useWalletStore } from "@/stores/use-wallet-store";
 import { fetchGraphQL } from "@/lib/graphql/client";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { 
   Layers, 
@@ -149,24 +148,24 @@ export default function BasketsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-            <Layers className="h-6 w-6 text-emerald-400" />
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+            <Layers className="h-6 w-6 text-emerald-600" />
             Curated Crypto Baskets
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Diversify your testnet portfolio in a single transaction with weighted thematic indexes.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-1 text-xs text-slate-300">
-            <span>Amount:</span>
+          <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl px-2.5 py-1 text-xs text-slate-700 shadow-2xs">
+            <span className="font-medium text-slate-500">Amount:</span>
             <input
               type="text"
               value={investAmount}
               onChange={(e) => setInvestAmount(e.target.value)}
-              className="bg-transparent font-mono text-emerald-400 font-semibold w-16 focus:outline-none"
+              className="bg-transparent font-mono text-emerald-700 font-bold w-16 focus:outline-none"
             />
-            <span className="text-[10px] text-slate-400 font-mono">ETH</span>
+            <span className="text-[10px] text-slate-400 font-mono font-semibold">ETH</span>
           </div>
           <Badge variant="cyan" className="flex items-center gap-1.5 py-1 px-3">
             <Database className="h-3.5 w-3.5" />
@@ -176,15 +175,15 @@ export default function BasketsPage() {
       </div>
 
       {error && (
-        <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-400 flex items-center gap-2">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700 flex items-center gap-2">
           <AlertCircle className="h-4 w-4 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {isLoading ? (
-        <div className="flex items-center justify-center p-12 text-slate-400 gap-2">
-          <Loader2 className="h-5 w-5 animate-spin text-emerald-400" />
+        <div className="flex items-center justify-center p-12 text-slate-500 gap-2">
+          <Loader2 className="h-5 w-5 animate-spin text-emerald-600" />
           <span>Loading Baskets from Neon GraphQL...</span>
         </div>
       ) : (
@@ -195,31 +194,31 @@ export default function BasketsPage() {
               : [];
             const isSuccess = successInfo?.id === basket.id;
             return (
-              <Card key={basket.id} className="glass flex flex-col justify-between hover:border-slate-700/80 transition-all">
+              <Card key={basket.id} className="bg-white border-slate-200/90 shadow-xs flex flex-col justify-between hover:shadow-md hover:-translate-y-0.5 transition-all">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between mb-2">
                     <Badge variant={basket.riskLevel === "Low" ? "default" : basket.riskLevel === "Medium" ? "cyan" : "warning"}>
                       {basket.riskLevel} Risk
                     </Badge>
-                    <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1 font-mono">
+                    <span className="text-xs font-bold text-emerald-700 flex items-center gap-1 font-mono">
                       <TrendingUp className="h-3 w-3" />
                       +{basket.targetApy}% APY
                     </span>
                   </div>
-                  <CardTitle className="text-lg">{basket.name}</CardTitle>
-                  <span className="text-xs font-mono text-slate-400">{basket.symbol}</span>
-                  <p className="text-xs text-slate-400 mt-2">{basket.description}</p>
+                  <CardTitle className="text-lg font-bold text-slate-900">{basket.name}</CardTitle>
+                  <span className="text-xs font-mono text-slate-400 font-medium">{basket.symbol}</span>
+                  <p className="text-xs text-slate-500 mt-2 leading-relaxed">{basket.description}</p>
                 </CardHeader>
 
                 <CardContent className="space-y-4">
                   {assetList.length > 0 && (
                     <div>
-                      <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider block mb-2">
+                      <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-2">
                         Composition
                       </span>
-                      <div className="h-2.5 w-full rounded-full bg-slate-800 flex overflow-hidden gap-0.5 mb-2">
+                      <div className="h-2.5 w-full rounded-full bg-slate-100 flex overflow-hidden gap-0.5 mb-2 border border-slate-200">
                         {assetList.map((item, idx) => {
-                          const colors = ["bg-emerald-500", "bg-cyan-500", "bg-purple-500", "bg-amber-500"];
+                          const colors = ["bg-emerald-500", "bg-sky-500", "bg-purple-500", "bg-amber-500"];
                           return (
                             <div
                               key={item.token}
@@ -230,7 +229,7 @@ export default function BasketsPage() {
                           );
                         })}
                       </div>
-                      <div className="flex justify-between text-xs text-slate-300 font-mono">
+                      <div className="flex justify-between text-xs text-slate-700 font-mono font-medium">
                         {assetList.map((item) => (
                           <span key={item.token}>
                             {item.token}: {item.percent}%
@@ -241,16 +240,16 @@ export default function BasketsPage() {
                   )}
 
                   {isSuccess && successInfo && (
-                    <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-400 space-y-1.5">
+                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800 space-y-1.5">
                       <div className="flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 shrink-0" />
-                        <span className="font-medium">Subscribed {investAmount} ETH to {basket.symbol}!</span>
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+                        <span className="font-bold">Subscribed {investAmount} ETH to {basket.symbol}!</span>
                       </div>
                       <a
                         href={`https://sepolia.etherscan.io/tx/${successInfo.txHash}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-[11px] text-cyan-400 hover:underline pt-1"
+                        className="inline-flex items-center gap-1 text-[11px] text-sky-600 hover:text-sky-700 font-medium hover:underline pt-1"
                       >
                         <span>View on Etherscan</span>
                         <ExternalLink className="h-3 w-3" />
@@ -262,7 +261,7 @@ export default function BasketsPage() {
                 <CardFooter className="pt-0">
                   <Button
                     variant="gradient"
-                    className="w-full text-xs font-semibold"
+                    className="w-full text-xs font-semibold shadow-md shadow-emerald-600/20 cursor-pointer"
                     onClick={() => handleInvest(basket)}
                     disabled={investingId === basket.id}
                   >
