@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/layout/AppShell";
+import { Web3Provider } from "@/components/providers/Web3Provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,7 +30,9 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
     >
       <body className="min-h-full flex flex-col bg-[#090d16] text-slate-100 font-sans">
-        <AppShell>{children}</AppShell>
+        <Web3Provider>
+          <AppShell>{children}</AppShell>
+        </Web3Provider>
       </body>
     </html>
   );

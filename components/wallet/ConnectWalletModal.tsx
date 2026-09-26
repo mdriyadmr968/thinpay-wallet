@@ -1,0 +1,184 @@
+"use client";
+
+import * as React from "react";
+import { useConnect, useAccount, useDisconnect, useSignMessage } from "wagmi";
+import { useWalletStore } from "@/stores/use-wallet-store";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Wallet, Sparkles, Check, Copy, ExternalLink, Loader2, KeyRound } from "lucide-react";
+import { formatAddress } from "@/lib/utils";
+
+export function ConnectWalletModal() {
+  const { 
+    connectModalOpen, 
+    setConnectModalOpen, 
+    setWallet, 
+    isConnected, 
+    isDemo, 
+    address, 
+    disconnect: disconnectStore 
+  } = useWalletStore();
+  
+  const { connectors, connect, isPending } = useConnect();
+  const { address: wagmiAddress, isConnected: isWagmiConnected, chainId } = useAccount();
+  const { disconnect: disconnectWagmi } = useDisconnect();
+  const [demoLoading, setDemoLoading] = React.useState(false);
+  const [copied, setCopied] = React.useState(false);
+
+  // Sync Wagmi account state with wallet store
+  React.useEffect(() => {
+    if (isWagmiConnected && wagmiAddress) {
+      setWallet(wagmiAddress, chainId || 11155111, false);
+    }
+  }, [isWagmiConnected, wagmiAddress, chainId, setWallet]);
+
+  const handleCopy = () => {
+    if (!address) return;
+    navigator.clipboard.writeText(address);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDemoConnect = async () => {
+    setDemoLoading(true);
+    try {
+      // Call backend demo login or use pre-configured testnet address
+      const res = await fetch("http://127.0.0.1:5000/api/v1/auth/demo-login", {
+        method: "POST",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setWallet(data.user.address, 11155111, true, data.token);
+      } else {
+        // Fallback demo address
+        setWallet("0x1111111254fb6c44bac0bed2854e76f90643097d", 11155111, true);
+      }
+    } catch {
+      setWallet("0x1111111254fb6c44bac0bed2854e76f90643097d", 11155111, true);
+    } finally {
+      setDemoLoading(false);
+    }
+  };
+
+  const handleDisconnect = () => {
+    if (isWagmiConnected) {
+      disconnectWagmi();
+    }
+    disconnectStore();
+  };
+
+  return (
+    <Dialog open={connectModalOpen} onOpenChange={setConnectModalOpen}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <div className="flex items-center gap-2 mb-1">
+            <div className="h-8 w-8 rounded-xl bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
+              <Wallet className="h-4 w-4 text-emerald-400" />
+            </div>
+            <DialogTitle className="text-xl">
+              {isConnected ? "Wallet Connected" : "Connect Testnet Wallet"}
+            </DialogTitle>
+          </div>
+          <DialogDescription>
+            {isConnected
+              ? "Your active session is connected to ThinPay multi-chain testnets."
+              : "Select your preferred Web3 wallet or try instant 1-Click Demo Mode."}
+          </DialogDescription>
+        </DialogHeader>
+
+        {isConnected && address ? (
+          <div className="space-y-4 py-2">
+            <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-400">Account Type</span>
+                {isDemo ? (
+                  <Badge variant="cyan" className="text-[10px]">
+                    <Sparkles className="h-3 w-3 mr-1" /> 1-Click Demo Wallet
+                  </Badge>
+                ) : (
+                  <Badge variant="default" className="text-[10px]">
+                    Injected Web3
+                  </Badge>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between bg-slate-900/90 rounded-xl p-3 border border-slate-800">
+                <span className="font-mono text-sm text-slate-200">
+                  {formatAddress(address, 6)}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCopy}
+                  className="h-8 px-2 text-xs text-slate-400 hover:text-white"
+                >
+                  {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                </Button>
+              </div>
+            </div>
+
+            <Button
+              variant="destructive"
+              onClick={handleDisconnect}
+              className="w-full h-11 rounded-xl"
+            >
+              Disconnect Wallet
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-3 py-2">
+            {/* Instant Demo Option */}
+            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 font-medium text-emerald-400 text-sm">
+                  <Sparkles className="h-4 w-4" />
+                  Instant 1-Click Testnet Demo
+                </div>
+                <Badge variant="default" className="text-[10px]">Recommended</Badge>
+              </div>
+              <p className="text-xs text-slate-400">
+                No browser extension needed. Instantly explore multi-chain testnets and AI auditing.
+              </p>
+              <Button
+                variant="gradient"
+                className="w-full mt-2"
+                onClick={handleDemoConnect}
+                disabled={demoLoading}
+              >
+                {demoLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <KeyRound className="h-4 w-4 mr-2" />
+                )}
+                Launch Instant Demo
+              </Button>
+            </div>
+
+            {/* Injected Connectors (MetaMask / Browser) */}
+            <div className="space-y-2 pt-2">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider px-1">
+                Web3 Providers
+              </span>
+              {connectors.map((connector) => (
+                <Button
+                  key={connector.id}
+                  variant="secondary"
+                  className="w-full justify-between h-12 rounded-xl text-sm"
+                  onClick={() => connect({ connector })}
+                  disabled={isPending}
+                >
+                  <span className="flex items-center gap-2">
+                    <Wallet className="h-4 w-4 text-emerald-400" />
+                    {connector.name}
+                  </span>
+                  <Badge variant="outline" className="text-[10px]">EVM</Badge>
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}

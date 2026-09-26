@@ -1,9 +1,11 @@
 "use client";
 
 import { useUiStore } from "@/stores/use-ui-store";
+import { useWalletStore } from "@/stores/use-wallet-store";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Globe, Wallet, ShieldAlert, Cpu } from "lucide-react";
+import { Sparkles, Globe, Wallet, Cpu, CheckCircle2 } from "lucide-react";
+import { formatAddress } from "@/lib/utils";
 
 const NETWORKS = [
   { id: "sepolia", name: "Sepolia", chain: "ETH" },
@@ -15,6 +17,7 @@ const NETWORKS = [
 
 export function TopHeader() {
   const { selectedNetwork, setSelectedNetwork, setCopilotOpen } = useUiStore();
+  const { isConnected, address, isDemo, setConnectModalOpen } = useWalletStore();
 
   return (
     <header className="sticky top-0 z-20 flex h-16 w-full items-center justify-between border-b border-slate-800/80 bg-slate-950/70 px-4 md:px-8 backdrop-blur-xl">
@@ -48,7 +51,7 @@ export function TopHeader() {
       </div>
 
       <div className="flex items-center gap-2.5">
-        {/* Quick Gemini Copilot trigger for desktop */}
+        {/* Quick Gemini Copilot trigger */}
         <Button
           variant="outline"
           size="sm"
@@ -60,15 +63,32 @@ export function TopHeader() {
         </Button>
 
         {/* Connect Wallet Trigger */}
-        <Button
-          variant="gradient"
-          size="sm"
-          className="font-medium text-xs sm:text-sm"
-          id="connect-wallet-btn"
-        >
-          <Wallet className="h-4 w-4 mr-1.5" />
-          Connect Wallet
-        </Button>
+        {isConnected && address ? (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setConnectModalOpen(true)}
+            className="border border-slate-700 font-mono text-xs sm:text-sm flex items-center gap-2"
+          >
+            <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>{formatAddress(address)}</span>
+            {isDemo && (
+              <Badge variant="cyan" className="text-[9px] py-0 px-1 hidden sm:inline-flex">
+                Demo
+              </Badge>
+            )}
+          </Button>
+        ) : (
+          <Button
+            variant="gradient"
+            size="sm"
+            onClick={() => setConnectModalOpen(true)}
+            className="font-medium text-xs sm:text-sm"
+          >
+            <Wallet className="h-4 w-4 mr-1.5" />
+            Connect Wallet
+          </Button>
+        )}
       </div>
     </header>
   );
