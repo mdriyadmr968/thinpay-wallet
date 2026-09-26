@@ -26,12 +26,12 @@ export function ConnectWalletModal() {
   const [demoLoading, setDemoLoading] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
 
-  // Sync Wagmi account state with wallet store
+  // Sync Wagmi account state with wallet store (only when NOT in demo mode)
   React.useEffect(() => {
-    if (isWagmiConnected && wagmiAddress) {
+    if (isWagmiConnected && wagmiAddress && !isDemo) {
       setWallet(wagmiAddress, chainId || 11155111, false);
     }
-  }, [isWagmiConnected, wagmiAddress, chainId, setWallet]);
+  }, [isWagmiConnected, wagmiAddress, chainId, isDemo, setWallet]);
 
   const handleCopy = () => {
     if (!address) return;
@@ -42,20 +42,23 @@ export function ConnectWalletModal() {
 
   const handleDemoConnect = async () => {
     setDemoLoading(true);
+    if (isWagmiConnected) {
+      disconnectWagmi();
+    }
     try {
-      // Call backend demo login or use pre-configured testnet address
+      // Call backend demo login
       const res = await fetch("http://127.0.0.1:5000/api/v1/auth/demo-login", {
         method: "POST",
       });
       if (res.ok) {
         const data = await res.json();
-        setWallet(data.user.address, 11155111, true, data.token);
+        const demoAddr = data.user?.walletAddress || data.user?.address || "0x71c8360f3a8b4119d691e84c0f0811ef78b40b64";
+        setWallet(demoAddr, 11155111, true, data.token);
       } else {
-        // Fallback demo address
-        setWallet("0x1111111254fb6c44bac0bed2854e76f90643097d", 11155111, true);
+        setWallet("0x71c8360f3a8b4119d691e84c0f0811ef78b40b64", 11155111, true);
       }
     } catch {
-      setWallet("0x1111111254fb6c44bac0bed2854e76f90643097d", 11155111, true);
+      setWallet("0x71c8360f3a8b4119d691e84c0f0811ef78b40b64", 11155111, true);
     } finally {
       setDemoLoading(false);
     }

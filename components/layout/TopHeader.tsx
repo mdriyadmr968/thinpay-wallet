@@ -73,7 +73,7 @@ export function TopHeader() {
             <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
             <span>{formatAddress(address)}</span>
             {isDemo && (
-              <Badge variant="cyan" className="text-[9px] py-0 px-1 hidden sm:inline-flex">
+              <Badge variant="cyan" className="text-[9px] py-0 px-1.5 inline-flex">
                 Demo
               </Badge>
             )}
