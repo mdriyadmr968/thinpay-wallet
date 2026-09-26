@@ -26,6 +26,17 @@ export function ConnectWalletModal() {
   const [demoLoading, setDemoLoading] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
 
+  // Deduplicate connectors by name (prevents duplicate entries from EIP-6963 + injected)
+  const uniqueConnectors = React.useMemo(() => {
+    const seen = new Set<string>();
+    return connectors.filter((c) => {
+      const key = c.name.toLowerCase().trim();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [connectors]);
+
   // Sync Wagmi account state with wallet store (only when NOT in demo mode)
   React.useEffect(() => {
     if (isWagmiConnected && wagmiAddress && !isDemo) {
@@ -163,9 +174,9 @@ export function ConnectWalletModal() {
               <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider px-1">
                 Web3 Providers
               </span>
-              {connectors.map((connector) => (
+              {uniqueConnectors.map((connector) => (
                 <Button
-                  key={connector.id}
+                  key={connector.id || connector.name}
                   variant="secondary"
                   className="w-full justify-between h-12 rounded-xl text-sm"
                   onClick={() => connect({ connector })}

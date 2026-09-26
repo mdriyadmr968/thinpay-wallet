@@ -7,9 +7,7 @@ export const SUPPORTED_CHAINS = [sepolia, polygonAmoy, bscTestnet, baseSepolia] 
 export const wagmiConfig = createConfig({
   chains: SUPPORTED_CHAINS,
   connectors: [
-    injected({
-      target: "metaMask",
-    }),
+    injected(),
   ],
   transports: {
     [sepolia.id]: http("https://ethereum-sepolia-rpc.publicnode.com"),
