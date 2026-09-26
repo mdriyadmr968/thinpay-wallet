@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
 const navItems = [
-  { href: "/", label: "Overview", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/portfolio", label: "Portfolio", icon: WalletCards },
   { href: "/swap", label: "Swap & Bridge", icon: ArrowLeftRight },
   { href: "/baskets", label: "DeFi Baskets", icon: Layers },
@@ -31,7 +31,7 @@ export function DesktopSidebar() {
     <aside className="hidden md:flex flex-col w-64 border-r border-slate-800/80 bg-slate-950/70 backdrop-blur-xl h-screen sticky top-0 shrink-0 select-none z-30">
       {/* Brand Header */}
       <div className="h-16 flex items-center justify-between px-6 border-b border-slate-800/80">
-        <Link href="/" className="flex items-center gap-2.5 group">
+        <Link href="/dashboard" className="flex items-center gap-2.5 group">
           <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-emerald-500/25 group-hover:scale-105 transition-transform">
             <Sparkles className="h-5 w-5 text-slate-950" />
           </div>

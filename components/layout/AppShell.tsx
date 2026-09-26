@@ -1,10 +1,22 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { DesktopSidebar } from "./DesktopSidebar";
 import { TopHeader } from "./TopHeader";
 import { MobileNav } from "./MobileNav";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const isPublicPage = pathname === "/" || pathname === "/login";
+
+  if (isPublicPage) {
+    return (
+      <div className="min-h-screen bg-[#090d16] text-slate-100 antialiased selection:bg-emerald-500/30 selection:text-emerald-300">
+        {children}
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen bg-[#090d16] text-slate-100 antialiased selection:bg-emerald-500/30 selection:text-emerald-300">
       {/* Desktop Sidebar Navigation */}

@@ -17,7 +17,7 @@ export function MobileNav() {
   const { setCopilotOpen } = useUiStore();
 
   const links = [
-    { href: "/", label: "Home", icon: LayoutDashboard },
+    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/portfolio", label: "Portfolio", icon: WalletCards },
     { href: "/swap", label: "Swap", icon: ArrowLeftRight },
     { href: "/baskets", label: "Baskets", icon: Layers },
