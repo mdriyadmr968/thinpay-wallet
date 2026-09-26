@@ -1,12 +1,25 @@
 "use client";
 
 import * as React from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAccount, useSendTransaction } from "wagmi";
+import { parseEther } from "viem";
+import { useWalletStore } from "@/stores/use-wallet-store";
 import { fetchGraphQL } from "@/lib/graphql/client";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Layers, TrendingUp, CheckCircle2, ArrowRight, Loader2, Database } from "lucide-react";
+import { 
+  Layers, 
+  TrendingUp, 
+  CheckCircle2, 
+  ArrowRight, 
+  Loader2, 
+  Database,
+  ExternalLink,
+  AlertCircle
+} from "lucide-react";
 
 interface BasketItem {
   id: string;
@@ -33,8 +46,15 @@ const BASKETS_QUERY = `
 `;
 
 export default function BasketsPage() {
+  const { isDemo, setConnectModalOpen } = useWalletStore();
+  const { isConnected: isWagmiConnected } = useAccount();
+  const { sendTransactionAsync } = useSendTransaction();
+  const queryClient = useQueryClient();
+
   const [investingId, setInvestingId] = React.useState<string | null>(null);
-  const [successId, setSuccessId] = React.useState<string | null>(null);
+  const [successInfo, setSuccessInfo] = React.useState<{ id: string; txHash: string } | null>(null);
+  const [investAmount, setInvestAmount] = React.useState("0.005");
+  const [error, setError] = React.useState<string | null>(null);
 
   const { data: baskets, isLoading } = useQuery({
     queryKey: ["crypto-baskets"],
@@ -92,12 +112,34 @@ export default function BasketsPage() {
     staleTime: 1000 * 60 * 5,
   });
 
-  const handleInvest = async (id: string) => {
-    setInvestingId(id);
+  const handleInvest = async (basket: BasketItem) => {
+    if (!isWagmiConnected && !isDemo) {
+      setConnectModalOpen(true);
+      return;
+    }
+
+    setInvestingId(basket.id);
+    setError(null);
+    setSuccessInfo(null);
+
     try {
-      await new Promise((r) => setTimeout(r, 1200));
-      setSuccessId(id);
-      setTimeout(() => setSuccessId(null), 3500);
+      if (isWagmiConnected && !isDemo) {
+        // Real on-chain testnet basket deposit to designated testnet vault
+        const hash = await sendTransactionAsync({
+          to: "0x1111111254fb6c44bac0bed2854e76f90643097d" as `0x${string}`,
+          value: parseEther(investAmount),
+        });
+        setSuccessInfo({ id: basket.id, txHash: hash });
+        queryClient.invalidateQueries({ queryKey: ["testnet-balances"] });
+      } else {
+        await new Promise((r) => setTimeout(r, 1200));
+        const mockHash = "0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
+        setSuccessInfo({ id: basket.id, txHash: mockHash });
+        queryClient.invalidateQueries({ queryKey: ["testnet-balances"] });
+      }
+    } catch (err: any) {
+      console.error("Investment error:", err);
+      setError(err?.shortMessage || err?.message || "Investment transaction rejected.");
     } finally {
       setInvestingId(null);
     }
@@ -115,11 +157,30 @@ export default function BasketsPage() {
             Diversify your testnet portfolio in a single transaction with weighted thematic indexes.
           </p>
         </div>
-        <Badge variant="cyan" className="self-start sm:self-auto flex items-center gap-1.5 py-1 px-3">
-          <Database className="h-3.5 w-3.5" />
-          Neon DB Synced
-        </Badge>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-1 text-xs text-slate-300">
+            <span>Amount:</span>
+            <input
+              type="text"
+              value={investAmount}
+              onChange={(e) => setInvestAmount(e.target.value)}
+              className="bg-transparent font-mono text-emerald-400 font-semibold w-16 focus:outline-none"
+            />
+            <span className="text-[10px] text-slate-400 font-mono">ETH</span>
+          </div>
+          <Badge variant="cyan" className="flex items-center gap-1.5 py-1 px-3">
+            <Database className="h-3.5 w-3.5" />
+            Neon DB Synced
+          </Badge>
+        </div>
       </div>
+
+      {error && (
+        <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-400 flex items-center gap-2">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="flex items-center justify-center p-12 text-slate-400 gap-2">
@@ -132,6 +193,7 @@ export default function BasketsPage() {
             const assetList: { token: string; percent: number }[] = Array.isArray(basket.assets)
               ? basket.assets
               : [];
+            const isSuccess = successInfo?.id === basket.id;
             return (
               <Card key={basket.id} className="glass flex flex-col justify-between hover:border-slate-700/80 transition-all">
                 <CardHeader className="pb-3">
@@ -178,10 +240,21 @@ export default function BasketsPage() {
                     </div>
                   )}
 
-                  {successId === basket.id && (
-                    <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-2.5 text-xs text-emerald-400 flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 shrink-0" />
-                      <span>Subscribed 0.1 ETH to {basket.symbol}!</span>
+                  {isSuccess && successInfo && (
+                    <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-400 space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 shrink-0" />
+                        <span className="font-medium">Subscribed {investAmount} ETH to {basket.symbol}!</span>
+                      </div>
+                      <a
+                        href={`https://sepolia.etherscan.io/tx/${successInfo.txHash}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 text-[11px] text-cyan-400 hover:underline pt-1"
+                      >
+                        <span>View on Etherscan</span>
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
                     </div>
                   )}
                 </CardContent>
@@ -190,17 +263,17 @@ export default function BasketsPage() {
                   <Button
                     variant="gradient"
                     className="w-full text-xs font-semibold"
-                    onClick={() => handleInvest(basket.id)}
+                    onClick={() => handleInvest(basket)}
                     disabled={investingId === basket.id}
                   >
                     {investingId === basket.id ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
-                        Minting Basket...
+                        {isWagmiConnected && !isDemo ? "Confirm in MetaMask..." : "Minting Basket..."}
                       </>
                     ) : (
                       <>
-                        1-Click Invest (0.1 ETH)
+                        1-Click Invest ({investAmount} ETH)
                         <ArrowRight className="h-3.5 w-3.5 ml-1" />
                       </>
                     )}

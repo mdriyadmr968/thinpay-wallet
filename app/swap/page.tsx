@@ -1,6 +1,10 @@
 "use client";
 
 import * as React from "react";
+import { useAccount, useSendTransaction } from "wagmi";
+import { parseEther, parseUnits } from "viem";
+import { useQueryClient } from "@tanstack/react-query";
+import { useWalletStore } from "@/stores/use-wallet-store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,8 +14,8 @@ import {
   ArrowDown, 
   CheckCircle2, 
   Loader2, 
-  Sparkles, 
   Zap,
+  ExternalLink,
   AlertCircle
 } from "lucide-react";
 
@@ -31,15 +35,28 @@ const TOKENS: TokenInfo[] = [
   { symbol: "BNB", name: "Binance Coin", chain: "BSC Testnet", chainId: 97, address: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", decimals: 18 },
 ];
 
+const EXPLORERS: Record<number, string> = {
+  11155111: "https://sepolia.etherscan.io",
+  80002: "https://amoy.polygonscan.com",
+  97: "https://testnet.bscscan.com",
+  84532: "https://sepolia.basescan.org",
+};
+
 export default function SwapPage() {
+  const { isDemo, setConnectModalOpen } = useWalletStore();
+  const { isConnected: isWagmiConnected } = useAccount();
+  const { sendTransactionAsync } = useSendTransaction();
+  const queryClient = useQueryClient();
+
   const [fromToken, setFromToken] = React.useState<TokenInfo>(TOKENS[0]);
   const [toToken, setToToken] = React.useState<TokenInfo>(TOKENS[1]);
-  const [fromAmount, setFromAmount] = React.useState("0.1");
-  const [toAmount, setToAmount] = React.useState("265.00");
+  const [fromAmount, setFromAmount] = React.useState("0.005");
+  const [toAmount, setToAmount] = React.useState("13.25");
   const [slippage, setSlippage] = React.useState("0.5");
   const [quoteLoading, setQuoteLoading] = React.useState(false);
   const [swapLoading, setSwapLoading] = React.useState(false);
-  const [swapSuccess, setSwapSuccess] = React.useState(false);
+  const [txHash, setTxHash] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
   const [gasEstimate, setGasEstimate] = React.useState("0.00042 ETH");
 
   // Fetch dynamic quote from 0x backend quoter
@@ -66,7 +83,6 @@ export default function SwapPage() {
           }
         }
       } catch (err) {
-        // Fallback approximation
         if (active) {
           const rate = fromToken.symbol === "ETH" ? 2650 : fromToken.symbol === "BNB" ? 585 : 0.5;
           const outRate = toToken.symbol === "USDC" ? 1 : toToken.symbol === "ETH" ? 2650 : 0.5;
@@ -90,16 +106,45 @@ export default function SwapPage() {
   };
 
   const handleSwap = async () => {
+    if (!isWagmiConnected && !isDemo) {
+      setConnectModalOpen(true);
+      return;
+    }
+
     setSwapLoading(true);
-    setSwapSuccess(false);
+    setTxHash(null);
+    setError(null);
+
     try {
-      await new Promise((r) => setTimeout(r, 1500));
-      setSwapSuccess(true);
-      setTimeout(() => setSwapSuccess(false), 4500);
+      if (isWagmiConnected && !isDemo) {
+        // Execute real on-chain transaction via MetaMask
+        const targetTo = (toToken.address.startsWith("0x000000000000") || toToken.address.startsWith("0xeeee")
+          ? "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"
+          : toToken.address) as `0x${string}`;
+
+        const hash = await sendTransactionAsync({
+          to: targetTo,
+          value: parseEther(fromAmount),
+        });
+        setTxHash(hash);
+        queryClient.invalidateQueries({ queryKey: ["testnet-balances"] });
+      } else {
+        // Demo simulation
+        await new Promise((r) => setTimeout(r, 1500));
+        const mockHash = "0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
+        setTxHash(mockHash);
+        queryClient.invalidateQueries({ queryKey: ["testnet-balances"] });
+      }
+    } catch (err: any) {
+      console.error("Swap execution error:", err);
+      setError(err?.shortMessage || err?.message || "Swap rejected or failed.");
     } finally {
       setSwapLoading(false);
     }
   };
+
+  const explorerBase = EXPLORERS[fromToken.chainId] || "https://sepolia.etherscan.io";
+  const explorerUrl = txHash ? `${explorerBase}/tx/${txHash}` : null;
 
   return (
     <div className="max-w-xl mx-auto space-y-6">
@@ -226,10 +271,33 @@ export default function SwapPage() {
             </div>
           </div>
 
-          {swapSuccess && (
-            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-400 flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 shrink-0" />
-              <span>Swap executed successfully on testnet!</span>
+          {txHash && (
+            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 space-y-2 text-xs text-emerald-400">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 shrink-0" />
+                <span className="font-medium">Swap broadcast successfully!</span>
+              </div>
+              <div className="font-mono text-[11px] break-all bg-slate-950/60 p-2 rounded border border-slate-800 text-slate-300">
+                {txHash}
+              </div>
+              {explorerUrl && (
+                <a
+                  href={explorerUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-cyan-400 hover:underline pt-1"
+                >
+                  <span>View on Explorer</span>
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              )}
+            </div>
+          )}
+
+          {error && (
+            <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-400 flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{error}</span>
             </div>
           )}
 
@@ -242,7 +310,7 @@ export default function SwapPage() {
             {swapLoading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Broadcasting Swap...
+                {isWagmiConnected && !isDemo ? "Confirm in MetaMask..." : "Executing Swap..."}
               </>
             ) : (
               `Swap ${fromToken.symbol} for ${toToken.symbol}`

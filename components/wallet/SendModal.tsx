@@ -3,15 +3,30 @@
 import * as React from "react";
 import { useUiStore } from "@/stores/use-ui-store";
 import { useWalletStore } from "@/stores/use-wallet-store";
+import { useAccount, useSendTransaction } from "wagmi";
+import { parseEther, isAddress } from "viem";
+import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUpRight, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { ArrowUpRight, Loader2, CheckCircle2, AlertCircle, ExternalLink } from "lucide-react";
+
+const EXPLORERS: Record<string, string> = {
+  sepolia: "https://sepolia.etherscan.io",
+  amoy: "https://amoy.polygonscan.com",
+  bsc_testnet: "https://testnet.bscscan.com",
+  base_sepolia: "https://sepolia.basescan.org",
+  solana_devnet: "https://explorer.solana.com?cluster=devnet",
+};
 
 export function SendModal() {
   const { isSendOpen, setSendOpen, selectedNetwork } = useUiStore();
-  const { isConnected } = useWalletStore();
+  const { isConnected, isDemo } = useWalletStore();
+  const { address: wagmiAddress, isConnected: isWagmiConnected } = useAccount();
+  const { sendTransactionAsync } = useSendTransaction();
+  const queryClient = useQueryClient();
+
   const [recipient, setRecipient] = React.useState("");
   const [amount, setAmount] = React.useState("");
   const [loading, setLoading] = React.useState(false);
@@ -20,8 +35,19 @@ export function SendModal() {
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!recipient || !amount) {
+    if (!recipient.trim() || !amount.trim()) {
       setError("Please fill in recipient address and amount");
+      return;
+    }
+
+    if (!isAddress(recipient.trim())) {
+      setError("Please enter a valid EVM address (0x...)");
+      return;
+    }
+
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount) || numAmount <= 0) {
+      setError("Please enter a valid positive amount");
       return;
     }
 
@@ -30,12 +56,25 @@ export function SendModal() {
     setTxHash(null);
 
     try {
-      // Simulate or call backend transaction broadcaster
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      const mockHash = "0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
-      setTxHash(mockHash);
-    } catch {
-      setError("Transaction broadcast failed. Check RPC or gas settings.");
+      // 1. If connected via MetaMask / Injected Web3: broadcast real on-chain transaction!
+      if (isWagmiConnected && !isDemo) {
+        const hash = await sendTransactionAsync({
+          to: recipient.trim() as `0x${string}`,
+          value: parseEther(amount.trim()),
+        });
+        setTxHash(hash);
+        // Refresh balance query automatically
+        queryClient.invalidateQueries({ queryKey: ["testnet-balances"] });
+      } else {
+        // 2. Demo Mode fallback
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        const mockHash = "0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
+        setTxHash(mockHash);
+        queryClient.invalidateQueries({ queryKey: ["testnet-balances"] });
+      }
+    } catch (err: any) {
+      console.error("Send transaction error:", err);
+      setError(err?.shortMessage || err?.message || "Transaction rejected or failed.");
     } finally {
       setLoading(false);
     }
@@ -47,6 +86,9 @@ export function SendModal() {
     setAmount("");
     setError(null);
   };
+
+  const explorerBase = EXPLORERS[selectedNetwork] || "https://sepolia.etherscan.io";
+  const explorerUrl = txHash ? `${explorerBase}/tx/${txHash}` : null;
 
   return (
     <Dialog open={isSendOpen} onOpenChange={(open) => { setSendOpen(open); if (!open) handleReset(); }}>
@@ -70,12 +112,23 @@ export function SendModal() {
             </div>
             <div>
               <h4 className="font-semibold text-white text-base">Transaction Submitted</h4>
-              <p className="text-xs text-slate-400 mt-1">Successfully broadcast to the testnet mempool.</p>
+              <p className="text-xs text-slate-400 mt-1">Successfully broadcast to the testnet blockchain.</p>
             </div>
             <div className="bg-slate-950 rounded-xl p-3 border border-slate-800 break-all text-xs font-mono text-emerald-400">
               {txHash}
             </div>
-            <Button variant="secondary" className="w-full" onClick={handleReset}>
+            {explorerUrl && (
+              <a
+                href={explorerUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs text-cyan-400 hover:underline"
+              >
+                <span>View on Block Explorer</span>
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            )}
+            <Button variant="secondary" className="w-full mt-2" onClick={handleReset}>
               Send Another
             </Button>
           </div>
@@ -86,7 +139,7 @@ export function SendModal() {
                 Recipient Address
               </label>
               <Input
-                placeholder="0x... or Solana pubkey"
+                placeholder="0x... recipient address"
                 value={recipient}
                 onChange={(e) => setRecipient(e.target.value)}
                 className="font-mono text-xs"
@@ -98,10 +151,10 @@ export function SendModal() {
                 <label className="text-xs font-medium text-slate-300">Amount</label>
                 <button
                   type="button"
-                  onClick={() => setAmount("0.5")}
+                  onClick={() => setAmount("0.005")}
                   className="text-xs text-emerald-400 hover:underline"
                 >
-                  Set Max (0.50)
+                  Quick Amount (0.005)
                 </button>
               </div>
               <div className="relative">
@@ -114,15 +167,15 @@ export function SendModal() {
                   className="font-mono pr-16"
                 />
                 <span className="absolute right-3 top-3 text-xs font-semibold text-slate-400 uppercase">
-                  {selectedNetwork === "amoy" ? "POL" : selectedNetwork === "solana_devnet" ? "SOL" : "ETH"}
+                  {selectedNetwork === "amoy" ? "POL" : selectedNetwork === "bsc_testnet" ? "BNB" : "ETH"}
                 </span>
               </div>
             </div>
 
             <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3 space-y-1.5 text-xs text-slate-400">
               <div className="flex justify-between">
-                <span>Estimated Gas:</span>
-                <span className="text-slate-200 font-mono">~0.00042 ETH</span>
+                <span>Network:</span>
+                <span className="text-slate-200 font-mono capitalize">{selectedNetwork.replace("_", " ")}</span>
               </div>
               <div className="flex justify-between">
                 <span>Confirmation Time:</span>
@@ -146,7 +199,7 @@ export function SendModal() {
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Broadcasting...
+                  {isWagmiConnected && !isDemo ? "Confirm in MetaMask..." : "Broadcasting..."}
                 </>
               ) : (
                 "Review & Send"
