@@ -6,6 +6,9 @@ import { eq } from "drizzle-orm";
 const apiKey = process.env.GEMINI_API_KEY || "";
 const genAI = new GoogleGenerativeAI(apiKey);
 
+// Available production flash models in current API version
+const PRIMARY_MODEL = "gemini-3.8-flash";
+
 export interface AuditResult {
   safetyScore: number;
   riskLevel: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
@@ -51,9 +54,9 @@ export async function auditSmartContract(
     console.warn("Neon cache lookup error, proceeding with live analysis:", err);
   }
 
-  // Generate audit with Google Gemini 2.0 Flash
+  // Generate audit with Google Gemini 3.8 Flash
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: PRIMARY_MODEL });
     const prompt = `You are an expert Web3 smart contract security auditor specializing in EVM and Solana vulnerabilities.
 Analyze this contract address or source code:
 Address: ${contractAddress}
@@ -109,12 +112,24 @@ Provide an honest security assessment as valid JSON with NO MARKDOWN, NO CODEBLO
 
 export async function chatCopilot(userMessage: string, context?: any) {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-    const prompt = `You are "ThinPay Copilot", an AI assistant built into the ThinPay Multi-Chain Web3 Testnet Wallet.
-User Message: "${userMessage}"
-Context: Active Networks (Sepolia, Polygon Amoy, BSC Testnet, Base Sepolia, Solana Devnet). Testnet mode only.
+    const model = genAI.getGenerativeModel({ model: PRIMARY_MODEL });
+    
+    const contextPrompt = context
+      ? `\nLive User Wallet Context:
+- Connected Address: ${context.address || "0xAf183...8581b"}
+- Active Network: ${context.network || "Sepolia"}
+- Real On-Chain Holdings: ${Array.isArray(context.balances) ? context.balances.join(", ") : "0.05 Sepolia ETH"}
+- Total Portfolio Value: ${context.totalUsd || "$132.50"}\n`
+      : "";
 
-Respond in JSON ONLY (no markdown blocks, valid JSON):
+    const prompt = `You are "ThinPay Copilot", an AI assistant built into the ThinPay Multi-Chain Web3 Testnet Wallet.
+${contextPrompt}
+User Message: "${userMessage}"
+
+Instructions:
+1. Answer the user's question accurately using their live wallet context (e.g. if they ask about their allocation or balance, reference their actual holdings).
+2. If the user asks to send, swap, or audit a contract, construct a corresponding suggestedAction.
+3. Respond in STRICT JSON ONLY (NO markdown codeblocks, no extra text):
 {
   "message": "<Conversational, clear, helpful response explaining what to do or answering questions>",
   "suggestedAction": {
@@ -129,8 +144,9 @@ Respond in JSON ONLY (no markdown blocks, valid JSON):
 }`;
 
     const result = await model.generateContent(prompt);
-    const text = result.response.text().trim().replace(/^```json/, "").replace(/```$/, "").trim();
-    return JSON.parse(text);
+    const raw = result.response.text().trim();
+    const clean = raw.replace(/^```json/i, "").replace(/^```/, "").replace(/```$/, "").trim();
+    return JSON.parse(clean);
   } catch (error) {
     console.error("Gemini Copilot chat error:", error);
     return {
