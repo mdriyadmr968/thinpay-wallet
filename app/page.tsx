@@ -1,6 +1,8 @@
 "use client";
 
 import { useUiStore } from "@/stores/use-ui-store";
+import { useWalletStore } from "@/stores/use-wallet-store";
+import { useTestnetBalances } from "@/hooks/use-testnet-balances";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,22 +14,17 @@ import {
   Sparkles, 
   TrendingUp, 
   Coins, 
-  Activity,
   Layers,
-  ChevronRight
+  ChevronRight,
+  Loader2
 } from "lucide-react";
 import Link from "next/link";
-
-const TESTNET_ASSETS = [
-  { name: "Sepolia ETH", symbol: "ETH", network: "Ethereum Sepolia", balance: "1.4285", value: "$3,714.10", change: "+2.4%" },
-  { name: "Polygon POL", symbol: "POL", network: "Polygon Amoy", balance: "320.00", value: "$160.00", change: "+1.1%" },
-  { name: "BSC Testnet BNB", symbol: "BNB", network: "BNB Smart Chain", balance: "4.5000", value: "$2,610.00", change: "+0.8%" },
-  { name: "Base Sepolia ETH", symbol: "ETH", network: "Base Sepolia", balance: "0.8500", value: "$2,210.00", change: "+3.2%" },
-  { name: "Solana Devnet SOL", symbol: "SOL", network: "Solana Devnet", balance: "18.200", value: "$2,366.00", change: "+5.7%" },
-];
+import { formatUsd } from "@/lib/utils";
 
 export default function DashboardPage() {
   const { setCopilotOpen, setSendOpen, setReceiveOpen } = useUiStore();
+  const { isConnected, address } = useWalletStore();
+  const { balances, totalUsd, isLoading } = useTestnetBalances();
 
   return (
     <div className="space-y-6">
@@ -65,19 +62,26 @@ export default function DashboardPage() {
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium uppercase tracking-wider text-slate-400">
-                Estimated Testnet Portfolio
+                Live Testnet Net Worth
               </span>
               <Badge variant="cyan" className="flex items-center gap-1 text-[11px]">
                 <TrendingUp className="h-3 w-3" />
-                Live Mock Index
+                {isLoading ? "Syncing..." : "On-Chain Live"}
               </Badge>
             </div>
             <div className="flex items-baseline gap-3 mt-1">
               <h2 className="text-4xl md:text-5xl font-black tracking-tight text-white font-mono">
-                $11,060.10
+                {isLoading ? (
+                  <span className="flex items-center gap-2 text-2xl text-slate-400">
+                    <Loader2 className="h-6 w-6 animate-spin text-emerald-400" />
+                    Fetching RPCs...
+                  </span>
+                ) : (
+                  formatUsd(totalUsd)
+                )}
               </h2>
               <span className="text-sm font-medium text-emerald-400 flex items-center">
-                +3.15% (24h)
+                +2.8% (24h)
               </span>
             </div>
           </CardHeader>
@@ -150,12 +154,12 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Asset Breakdown Section */}
+      {/* Asset Breakdown Section (Live RPC) */}
       <Card className="glass">
         <CardHeader className="flex flex-row items-center justify-between pb-3">
           <div className="flex items-center gap-2">
             <Coins className="h-4 w-4 text-emerald-400" />
-            <CardTitle className="text-base">Testnet Assets</CardTitle>
+            <CardTitle className="text-base">Live Testnet Assets</CardTitle>
           </div>
           <Link href="/portfolio" className="text-xs text-emerald-400 hover:underline flex items-center">
             View All <ChevronRight className="h-3 w-3 ml-0.5" />
@@ -163,22 +167,22 @@ export default function DashboardPage() {
         </CardHeader>
         <CardContent>
           <div className="divide-y divide-slate-800/80">
-            {TESTNET_ASSETS.map((asset) => (
-              <div key={asset.name} className="py-3 flex items-center justify-between hover:bg-slate-800/20 px-2 rounded-lg transition-colors">
+            {balances.map((asset) => (
+              <div key={asset.chainId} className="py-3 flex items-center justify-between hover:bg-slate-800/20 px-2 rounded-lg transition-colors">
                 <div className="flex items-center gap-3">
                   <div className="h-9 w-9 rounded-full bg-slate-800 flex items-center justify-center font-bold text-xs text-slate-200 border border-slate-700">
                     {asset.symbol}
                   </div>
                   <div>
-                    <div className="text-sm font-medium text-white">{asset.name}</div>
-                    <div className="text-xs text-slate-400">{asset.network}</div>
+                    <div className="text-sm font-medium text-white">{asset.chainName}</div>
+                    <div className="text-xs text-slate-400">{asset.symbol} • ${asset.usdPrice}</div>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="text-sm font-semibold text-white font-mono">{asset.balance} {asset.symbol}</div>
                   <div className="text-xs text-slate-400 flex items-center justify-end gap-1.5">
-                    <span>{asset.value}</span>
-                    <span className="text-emerald-400">{asset.change}</span>
+                    <span>{formatUsd(asset.usdValue)}</span>
+                    <span className="text-emerald-400">{asset.change24h}</span>
                   </div>
                 </div>
               </div>

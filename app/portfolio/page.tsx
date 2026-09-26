@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useUiStore } from "@/stores/use-ui-store";
+import { useTestnetBalances } from "@/hooks/use-testnet-balances";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,46 +10,22 @@ import {
   WalletCards, 
   ArrowUpRight, 
   ArrowDownLeft, 
-  ArrowLeftRight, 
-  ExternalLink, 
   RefreshCw,
   PieChart,
-  ShieldCheck,
-  Clock
+  Clock,
+  Loader2
 } from "lucide-react";
-
-interface Asset {
-  chain: string;
-  name: string;
-  symbol: string;
-  balance: string;
-  price: string;
-  value: string;
-  allocation: number;
-}
-
-const PORTFOLIO_ASSETS: Asset[] = [
-  { chain: "Sepolia", name: "Sepolia Ethereum", symbol: "ETH", balance: "1.4285", price: "$2,600.00", value: "$3,714.10", allocation: 33.6 },
-  { chain: "BSC Testnet", name: "Binance Coin", symbol: "BNB", balance: "4.5000", price: "$580.00", value: "$2,610.00", allocation: 23.6 },
-  { chain: "Solana Devnet", name: "Solana", symbol: "SOL", balance: "18.2000", price: "$130.00", value: "$2,366.00", allocation: 21.4 },
-  { chain: "Base Sepolia", name: "Base ETH", symbol: "ETH", balance: "0.8500", price: "$2,600.00", value: "$2,210.00", allocation: 20.0 },
-  { chain: "Polygon Amoy", name: "Polygon Ecosystem", symbol: "POL", balance: "320.0000", price: "$0.50", value: "$160.00", allocation: 1.4 },
-];
+import { formatUsd } from "@/lib/utils";
 
 const RECENT_TRANSACTIONS = [
-  { id: "1", type: "Received", asset: "1.00 ETH", chain: "Sepolia", from: "0x71c...99b", time: "10 mins ago", status: "Confirmed" },
-  { id: "2", type: "Swapped", asset: "0.2 ETH → 120 POL", chain: "Polygon Amoy", from: "ThinPay Swap", time: "2 hours ago", status: "Confirmed" },
-  { id: "3", type: "DeFi Basket", asset: "Invested 0.5 ETH", chain: "Base Sepolia", from: "Layer2 Giants Basket", time: "1 day ago", status: "Confirmed" },
+  { id: "1", type: "Received", asset: "0.25 ETH", chain: "Sepolia", from: "0x71c...99b", time: "10 mins ago", status: "Confirmed" },
+  { id: "2", type: "Swapped", asset: "0.05 ETH → 25 POL", chain: "Polygon Amoy", from: "ThinPay 0x Router", time: "2 hours ago", status: "Confirmed" },
+  { id: "3", type: "DeFi Basket", asset: "Subscribed 0.1 ETH", chain: "Base Sepolia", from: "Layer2 Giants Basket", time: "1 day ago", status: "Confirmed" },
 ];
 
 export default function PortfolioPage() {
   const { setSendOpen, setReceiveOpen } = useUiStore();
-  const [refreshing, setRefreshing] = React.useState(false);
-
-  const handleRefresh = () => {
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 800);
-  };
+  const { balances, totalUsd, isLoading, refetch, isRefetching } = useTestnetBalances();
 
   return (
     <div className="space-y-6">
@@ -60,7 +37,7 @@ export default function PortfolioPage() {
             Multi-Chain Portfolio
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Real-time aggregated view of your testnet assets across 5 chains.
+            Real-time aggregated view of your on-chain testnet assets across 4 EVM networks.
           </p>
         </div>
 
@@ -68,10 +45,11 @@ export default function PortfolioPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={handleRefresh}
+            onClick={() => refetch()}
+            disabled={isRefetching}
             className="text-xs text-slate-300 border-slate-700"
           >
-            <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${refreshing ? "animate-spin" : ""}`} />
+            <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isRefetching ? "animate-spin" : ""}`} />
             Refresh Balances
           </Button>
           <Button
@@ -99,24 +77,39 @@ export default function PortfolioPage() {
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
               <PieChart className="h-4 w-4 text-emerald-400" />
-              Asset Allocation
+              Dynamic Asset Allocation
             </span>
-            <span className="text-xs font-mono text-emerald-400 font-semibold">$11,060.10 Total</span>
+            <span className="text-xs font-mono text-emerald-400 font-semibold">
+              {formatUsd(totalUsd)} Total
+            </span>
           </div>
 
           <div className="h-3 w-full rounded-full bg-slate-800 flex overflow-hidden gap-0.5">
-            <div style={{ width: "33.6%" }} className="bg-emerald-500" title="Sepolia ETH (33.6%)" />
-            <div style={{ width: "23.6%" }} className="bg-amber-500" title="BSC BNB (23.6%)" />
-            <div style={{ width: "21.4%" }} className="bg-purple-500" title="Solana SOL (21.4%)" />
-            <div style={{ width: "20.0%" }} className="bg-cyan-500" title="Base ETH (20%)" />
-            <div style={{ width: "1.4%" }} className="bg-indigo-500" title="Polygon POL (1.4%)" />
+            {balances.map((b, idx) => {
+              const pct = totalUsd > 0 ? (b.usdValue / totalUsd) * 100 : 25;
+              const colors = ["bg-emerald-500", "bg-purple-500", "bg-amber-500", "bg-cyan-500"];
+              return (
+                <div
+                  key={b.chainId}
+                  style={{ width: `${Math.max(pct, 5)}%` }}
+                  className={colors[idx % colors.length]}
+                  title={`${b.symbol} (${pct.toFixed(1)}%)`}
+                />
+              );
+            })}
           </div>
 
           <div className="flex flex-wrap gap-4 mt-3 text-[11px] text-slate-400">
-            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-500" /> ETH (53.6%)</span>
-            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-amber-500" /> BNB (23.6%)</span>
-            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-purple-500" /> SOL (21.4%)</span>
-            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-indigo-500" /> POL (1.4%)</span>
+            {balances.map((b, idx) => {
+              const pct = totalUsd > 0 ? ((b.usdValue / totalUsd) * 100).toFixed(1) : "0";
+              const colors = ["bg-emerald-500", "bg-purple-500", "bg-amber-500", "bg-cyan-500"];
+              return (
+                <span key={b.chainId} className="flex items-center gap-1.5">
+                  <span className={`h-2 w-2 rounded-full ${colors[idx % colors.length]}`} />
+                  {b.symbol} ({pct}%)
+                </span>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
@@ -124,7 +117,10 @@ export default function PortfolioPage() {
       {/* Asset Table */}
       <Card className="glass">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Testnet Holdings</CardTitle>
+          <CardTitle className="text-base flex items-center justify-between">
+            <span>Testnet Holdings</span>
+            {isLoading && <Loader2 className="h-4 w-4 animate-spin text-emerald-400" />}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -139,28 +135,28 @@ export default function PortfolioPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
-                {PORTFOLIO_ASSETS.map((asset) => (
-                  <tr key={asset.name} className="hover:bg-slate-800/30 transition-colors">
+                {balances.map((asset) => (
+                  <tr key={asset.chainId} className="hover:bg-slate-800/30 transition-colors">
                     <td className="py-3.5 pl-2 font-medium text-white flex items-center gap-2.5">
                       <div className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center font-bold text-[11px] border border-slate-700">
                         {asset.symbol}
                       </div>
                       <div>
-                        <div>{asset.name}</div>
+                        <div>{asset.chainName}</div>
                         <div className="text-[10px] text-slate-500 uppercase">{asset.symbol}</div>
                       </div>
                     </td>
                     <td className="py-3.5">
-                      <Badge variant="outline" className="text-[10px] py-0 px-2">
-                        {asset.chain}
+                      <Badge variant="outline" className="text-[10px] py-0 px-2 uppercase">
+                        {asset.chainId.replace("_", " ")}
                       </Badge>
                     </td>
-                    <td className="py-3.5 text-slate-300 font-mono">{asset.price}</td>
+                    <td className="py-3.5 text-slate-300 font-mono">${asset.usdPrice}</td>
                     <td className="py-3.5 text-right font-mono font-medium text-white">
                       {asset.balance} {asset.symbol}
                     </td>
                     <td className="py-3.5 text-right font-mono font-semibold text-emerald-400 pr-2">
-                      {asset.value}
+                      {formatUsd(asset.usdValue)}
                     </td>
                   </tr>
                 ))}
