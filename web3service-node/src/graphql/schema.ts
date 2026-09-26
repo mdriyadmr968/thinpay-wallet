@@ -17,7 +17,10 @@ export const typeDefs = /* GraphQL */ `
   type CryptoBasket {
     id: ID!
     name: String!
+    symbol: String
     description: String
+    riskLevel: String
+    targetApy: String
     tokens: [BasketToken!]!
     isPublic: Boolean!
     createdAt: String!
@@ -59,6 +62,13 @@ export const typeDefs = /* GraphQL */ `
     tokens: [TokenBalance!]!
   }
 
+  input BasketTokenInput {
+    symbol: String!
+    name: String
+    address: String!
+    allocation: Int!
+  }
+
   type Query {
     me(walletAddress: String!): UserProfile
     cryptoBaskets(limit: Int): [CryptoBasket!]!
@@ -66,5 +76,22 @@ export const typeDefs = /* GraphQL */ `
     airdropCampaigns(activeOnly: Boolean): [AirdropCampaign!]!
     transactions(address: String, limit: Int): [TransactionItem!]!
     portfolio(address: String!): PortfolioSummary!
+  }
+
+  type Mutation {
+    recordBasketInvestment(
+      basketId: ID!
+      hash: String!
+      chainId: Int!
+      fromAddress: String!
+      toAddress: String!
+      amount: String!
+      tokenSymbol: String!
+    ): TransactionItem!
+    createBasket(
+      name: String!
+      description: String
+      tokens: [BasketTokenInput!]!
+    ): CryptoBasket!
   }
 `;
