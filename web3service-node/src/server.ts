@@ -3,6 +3,9 @@ import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes';
+import walletRoutes from './routes/walletRoutes';
+import swapRoutes from './routes/swapRoutes';
+import transactionRoutes from './routes/transactionRoutes';
 import { yoga } from './graphql';
 import { errorHandler } from './middleware/errorHandler';
 
@@ -25,6 +28,9 @@ app.use(yoga.graphqlEndpoint, yoga);
 
 // REST API Endpoints
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/wallet', walletRoutes);
+app.use('/api/v1/swap', swapRoutes);
+app.use('/api/v1/transaction', transactionRoutes);
 
 // Health Check
 app.get('/health', (req, res) => {
