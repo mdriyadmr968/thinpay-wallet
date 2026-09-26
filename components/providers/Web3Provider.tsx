@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider } from "wagmi";
 import { wagmiConfig } from "@/lib/web3/wagmiConfig";
 import { ConnectWalletModal } from "@/components/wallet/ConnectWalletModal";
+import { SendModal } from "@/components/wallet/SendModal";
+import { ReceiveModal } from "@/components/wallet/ReceiveModal";
 
 export function Web3Provider({ children }: { children: React.ReactNode }) {
   const [queryClient] = React.useState(
@@ -24,6 +26,8 @@ export function Web3Provider({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         {children}
         <ConnectWalletModal />
+        <SendModal />
+        <ReceiveModal />
       </QueryClientProvider>
     </WagmiProvider>
   );

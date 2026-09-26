@@ -27,7 +27,7 @@ const TESTNET_ASSETS = [
 ];
 
 export default function DashboardPage() {
-  const { setCopilotOpen } = useUiStore();
+  const { setCopilotOpen, setSendOpen, setReceiveOpen } = useUiStore();
 
   return (
     <div className="space-y-6">
@@ -84,11 +84,19 @@ export default function DashboardPage() {
           <CardContent className="pt-4">
             {/* Action Buttons */}
             <div className="grid grid-cols-4 gap-2 sm:gap-3">
-              <Button variant="secondary" className="flex-col h-auto py-3 px-2 gap-1 rounded-xl">
+              <Button 
+                variant="secondary" 
+                onClick={() => setSendOpen(true)}
+                className="flex-col h-auto py-3 px-2 gap-1 rounded-xl"
+              >
                 <ArrowUpRight className="h-5 w-5 text-emerald-400" />
                 <span className="text-xs">Send</span>
               </Button>
-              <Button variant="secondary" className="flex-col h-auto py-3 px-2 gap-1 rounded-xl">
+              <Button 
+                variant="secondary" 
+                onClick={() => setReceiveOpen(true)}
+                className="flex-col h-auto py-3 px-2 gap-1 rounded-xl"
+              >
                 <ArrowDownLeft className="h-5 w-5 text-cyan-400" />
                 <span className="text-xs">Receive</span>
               </Button>
