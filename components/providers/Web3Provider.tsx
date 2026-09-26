@@ -7,6 +7,7 @@ import { wagmiConfig } from "@/lib/web3/wagmiConfig";
 import { ConnectWalletModal } from "@/components/wallet/ConnectWalletModal";
 import { SendModal } from "@/components/wallet/SendModal";
 import { ReceiveModal } from "@/components/wallet/ReceiveModal";
+import { CopilotDrawer } from "@/components/ai/CopilotDrawer";
 
 export function Web3Provider({ children }: { children: React.ReactNode }) {
   const [queryClient] = React.useState(
@@ -28,6 +29,7 @@ export function Web3Provider({ children }: { children: React.ReactNode }) {
         <ConnectWalletModal />
         <SendModal />
         <ReceiveModal />
+        <CopilotDrawer />
       </QueryClientProvider>
     </WagmiProvider>
   );
