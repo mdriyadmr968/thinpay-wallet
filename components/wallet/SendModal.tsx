@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ArrowUpRight, Loader2, CheckCircle2, AlertCircle, ExternalLink, Zap, Layers } from "lucide-react";
 import { toast } from "sonner";
+import { sendSolanaDevnetLamports } from "@/lib/solana";
 
 const EXPLORERS: Record<string, string> = {
   sepolia: "https://sepolia.etherscan.io",
@@ -64,7 +65,12 @@ export function SendModal() {
       return;
     }
 
-    if (!isAddress(recipient.trim())) {
+    if (selectedNetwork === "solana_devnet") {
+      if (recipient.trim().length < 32 || recipient.trim().length > 44) {
+        setError("Please enter a valid Solana Devnet address (32-44 base58 characters)");
+        return;
+      }
+    } else if (!isAddress(recipient.trim())) {
       setError("Please enter a valid EVM address (0x...)");
       return;
     }
@@ -80,6 +86,18 @@ export function SendModal() {
     setTxHash(null);
 
     try {
+      // Special: Solana Devnet transfer
+      if (selectedNetwork === "solana_devnet") {
+        await new Promise((r) => setTimeout(r, 1200));
+        const solSig = await sendSolanaDevnetLamports(recipient.trim(), numAmount);
+        setTxHash(solSig);
+        toast.success("Solana Devnet transfer confirmed!", {
+          description: `Transferred ${amount} SOL to ${recipient.slice(0, 6)}...`,
+        });
+        queryClient.invalidateQueries({ queryKey: ["testnet-balances"] });
+        return;
+      }
+
       // 1. If connected via MetaMask / Injected Web3: broadcast real on-chain transaction!
       if (isWagmiConnected && !isDemo) {
         const targetChainId = CHAIN_IDS[selectedNetwork];
@@ -172,7 +190,7 @@ export function SendModal() {
                 Recipient Address
               </label>
               <Input
-                placeholder="0x... recipient address"
+                placeholder={selectedNetwork === "solana_devnet" ? "Solana Devnet address (base58)..." : "0x... recipient address"}
                 value={recipient}
                 onChange={(e) => setRecipient(e.target.value)}
                 className="font-mono text-xs"
@@ -184,10 +202,10 @@ export function SendModal() {
                 <label className="text-xs font-semibold text-slate-700">Amount</label>
                 <button
                   type="button"
-                  onClick={() => setAmount("0.005")}
+                  onClick={() => setAmount(selectedNetwork === "solana_devnet" ? "0.1" : "0.005")}
                   className="text-xs font-medium text-emerald-700 hover:underline cursor-pointer"
                 >
-                  Quick Amount (0.005)
+                  Quick Amount ({selectedNetwork === "solana_devnet" ? "0.1" : "0.005"})
                 </button>
               </div>
               <div className="relative">
@@ -200,7 +218,7 @@ export function SendModal() {
                   className="font-mono pr-16"
                 />
                 <span className="absolute right-3 top-3 text-xs font-semibold text-slate-500 uppercase">
-                  {selectedNetwork === "amoy" ? "POL" : selectedNetwork === "bsc_testnet" ? "BNB" : "ETH"}
+                  {selectedNetwork === "amoy" ? "POL" : selectedNetwork === "bsc_testnet" ? "BNB" : selectedNetwork === "solana_devnet" ? "SOL" : "ETH"}
                 </span>
               </div>
             </div>

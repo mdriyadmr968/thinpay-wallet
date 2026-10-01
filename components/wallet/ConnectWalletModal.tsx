@@ -10,6 +10,7 @@ import { Wallet, Sparkles, Check, Copy, ExternalLink, Loader2, KeyRound, Fingerp
 import { formatAddress } from "@/lib/utils";
 import { getApiUrl } from "@/lib/config";
 import { createPasskeyCredential } from "@/lib/webauthn";
+import { connectPhantomWallet, isPhantomInstalled } from "@/lib/solana";
 import { toast } from "sonner";
 
 export function ConnectWalletModal() {
@@ -21,7 +22,11 @@ export function ConnectWalletModal() {
     isDemo, 
     isPasskey,
     address, 
+    solanaAddress,
+    isSolanaConnected,
     setPasskeyWallet,
+    setSolanaWallet,
+    disconnectSolana,
     disconnect: disconnectStore 
   } = useWalletStore();
   
@@ -30,7 +35,23 @@ export function ConnectWalletModal() {
   const { disconnect: disconnectWagmi } = useDisconnect();
   const [demoLoading, setDemoLoading] = React.useState(false);
   const [passkeyLoading, setPasskeyLoading] = React.useState(false);
+  const [solanaLoading, setSolanaLoading] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
+
+  const handleSolanaConnect = async () => {
+    setSolanaLoading(true);
+    try {
+      const pubkey = await connectPhantomWallet();
+      setSolanaWallet(pubkey);
+      toast.success("Solana Devnet Wallet Connected!", {
+        description: `Pubkey: ${pubkey.slice(0, 8)}...${pubkey.slice(-6)}`,
+      });
+    } catch (err: any) {
+      toast.error("Solana connection failed", { description: err?.message });
+    } finally {
+      setSolanaLoading(false);
+    }
+  };
 
   const handlePasskeyConnect = async () => {
     setPasskeyLoading(true);
@@ -158,6 +179,36 @@ export function ConnectWalletModal() {
                   {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
                 </Button>
               </div>
+
+              {/* Solana Address if connected */}
+              {solanaAddress && (
+                <div className="pt-2 border-t border-slate-200">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[11px] font-semibold text-teal-800 flex items-center gap-1">
+                      Solana Devnet (SVM)
+                    </span>
+                    <Badge variant="cyan" className="text-[9px] py-0 px-1 bg-teal-50 text-teal-700 border-teal-200">
+                      Phantom
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between bg-white rounded-xl p-2.5 border border-teal-200">
+                    <span className="font-mono text-xs text-slate-800 font-medium">
+                      {solanaAddress.slice(0, 8)}...{solanaAddress.slice(-6)}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText(solanaAddress);
+                        toast.success("Solana address copied!");
+                      }}
+                      className="h-7 px-2 text-xs text-slate-500 hover:text-slate-800"
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
 
             <Button
@@ -246,6 +297,22 @@ export function ConnectWalletModal() {
                   <Badge variant="outline" className="text-[10px]">EVM</Badge>
                 </Button>
               ))}
+
+              {/* Solana SVM Connector */}
+              <Button
+                variant="secondary"
+                className="w-full justify-between h-12 rounded-xl text-sm border-teal-200 bg-teal-50/40 hover:bg-teal-50 text-slate-800 font-medium cursor-pointer"
+                onClick={handleSolanaConnect}
+                disabled={solanaLoading}
+              >
+                <span className="flex items-center gap-2">
+                  <div className="h-4 w-4 rounded-full bg-teal-600 flex items-center justify-center text-[10px] text-white font-bold">
+                    S
+                  </div>
+                  Phantom / Solana Devnet
+                </span>
+                <Badge variant="cyan" className="text-[10px] bg-teal-100 text-teal-800 border-teal-200">SVM</Badge>
+              </Button>
             </div>
           </div>
         )}

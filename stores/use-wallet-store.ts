@@ -9,11 +9,15 @@ interface WalletState {
   isPasskey: boolean;
   accountType: "eoa" | "smart_account" | "passkey";
   jwtToken: string | null;
+  solanaAddress: string | null;
+  isSolanaConnected: boolean;
   isConnecting: boolean;
   connectModalOpen: boolean;
   setConnectModalOpen: (open: boolean) => void;
   setWallet: (address: string, chainId: number, isDemo?: boolean, token?: string, accountType?: "eoa" | "smart_account" | "passkey") => void;
   setPasskeyWallet: (address: string, chainId: number) => void;
+  setSolanaWallet: (address: string) => void;
+  disconnectSolana: () => void;
   setBalance: (balance: string) => void;
   setConnecting: (loading: boolean) => void;
   disconnect: () => void;
@@ -28,6 +32,8 @@ export const useWalletStore = create<WalletState>((set) => ({
   isPasskey: false,
   accountType: "eoa",
   jwtToken: null,
+  solanaAddress: null,
+  isSolanaConnected: false,
   isConnecting: false,
   connectModalOpen: false,
   setConnectModalOpen: (open) => set({ connectModalOpen: open }),
@@ -54,6 +60,16 @@ export const useWalletStore = create<WalletState>((set) => ({
       isConnecting: false,
       connectModalOpen: false,
     }),
+  setSolanaWallet: (address) =>
+    set({
+      solanaAddress: address,
+      isSolanaConnected: true,
+    }),
+  disconnectSolana: () =>
+    set({
+      solanaAddress: null,
+      isSolanaConnected: false,
+    }),
   setBalance: (balance) => set({ balance }),
   setConnecting: (loading) => set({ isConnecting: loading }),
   disconnect: () =>
@@ -66,6 +82,8 @@ export const useWalletStore = create<WalletState>((set) => ({
       isPasskey: false,
       accountType: "eoa",
       jwtToken: null,
+      solanaAddress: null,
+      isSolanaConnected: false,
       isConnecting: false,
     }),
 }));
