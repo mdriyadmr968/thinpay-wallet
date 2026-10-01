@@ -20,7 +20,7 @@ export const NETWORKS = [
 
 export function TopHeader() {
   const { selectedNetwork, setSelectedNetwork, setCopilotOpen, setFaucetOpen } = useUiStore();
-  const { isConnected: isStoreConnected, address: storeAddress, isDemo, setConnectModalOpen } = useWalletStore();
+  const { isConnected: isStoreConnected, address: storeAddress, isDemo, isSelfCustody, isPasskey, setConnectModalOpen } = useWalletStore();
   const { address: wagmiAddress, chainId: activeChainId, isConnected: isWagmiConnected } = useAccount();
   const { switchChainAsync } = useSwitchChain();
 
@@ -122,7 +122,17 @@ export function TopHeader() {
           >
             <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
             <span>{formatAddress(address)}</span>
-            {isDemo && (
+            {isSelfCustody && (
+              <Badge variant="cyan" className="text-[9px] py-0 px-1.5 inline-flex font-semibold bg-amber-50 text-amber-700 border-amber-200">
+                Self-Custody
+              </Badge>
+            )}
+            {isPasskey && (
+              <Badge variant="cyan" className="text-[9px] py-0 px-1.5 inline-flex font-semibold bg-purple-50 text-purple-700 border-purple-200">
+                Passkey
+              </Badge>
+            )}
+            {isDemo && !isSelfCustody && (
               <Badge variant="cyan" className="text-[9px] py-0 px-1.5 inline-flex font-semibold">
                 Demo
               </Badge>

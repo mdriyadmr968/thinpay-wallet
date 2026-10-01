@@ -6,11 +6,12 @@ import { useWalletStore } from "@/stores/use-wallet-store";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Wallet, Sparkles, Check, Copy, ExternalLink, Loader2, KeyRound, Fingerprint } from "lucide-react";
+import { Wallet, Sparkles, Check, Copy, ExternalLink, Loader2, KeyRound, Fingerprint, Shield, Key } from "lucide-react";
 import { formatAddress } from "@/lib/utils";
 import { getApiUrl } from "@/lib/config";
 import { createPasskeyCredential } from "@/lib/webauthn";
 import { connectPhantomWallet, isPhantomInstalled } from "@/lib/solana";
+import { SelfCustodyModal } from "@/components/wallet/SelfCustodyModal";
 import { toast } from "sonner";
 
 export function ConnectWalletModal() {
@@ -21,6 +22,7 @@ export function ConnectWalletModal() {
     isConnected, 
     isDemo, 
     isPasskey,
+    isSelfCustody,
     address, 
     solanaAddress,
     isSolanaConnected,
@@ -36,6 +38,7 @@ export function ConnectWalletModal() {
   const [demoLoading, setDemoLoading] = React.useState(false);
   const [passkeyLoading, setPasskeyLoading] = React.useState(false);
   const [solanaLoading, setSolanaLoading] = React.useState(false);
+  const [selfCustodyOpen, setSelfCustodyOpen] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
 
   const handleSolanaConnect = async () => {
@@ -151,7 +154,11 @@ export function ConnectWalletModal() {
             <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-500 font-medium">Account Type</span>
-                {isPasskey ? (
+                {isSelfCustody ? (
+                  <Badge variant="cyan" className="text-[10px] bg-amber-50 text-amber-700 border-amber-200">
+                    <Shield className="h-3 w-3 mr-1" /> Self-Custody Vault
+                  </Badge>
+                ) : isPasskey ? (
                   <Badge variant="cyan" className="text-[10px] bg-purple-50 text-purple-700 border-purple-200">
                     <Fingerprint className="h-3 w-3 mr-1" /> Passkey Smart Account (ERC-4337)
                   </Badge>
@@ -277,6 +284,30 @@ export function ConnectWalletModal() {
               </Button>
             </div>
 
+            {/* Self-Custody Vault Option */}
+            <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 font-semibold text-amber-900 text-sm">
+                  <Shield className="h-4 w-4 text-amber-600" />
+                  Self-Custody Testnet Vault
+                </div>
+                <Badge variant="cyan" className="text-[10px] bg-amber-100 text-amber-800 border-amber-200">
+                  User Owned
+                </Badge>
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Create or unlock your password-encrypted 12-word recovery phrase or private key.
+              </p>
+              <Button
+                variant="secondary"
+                className="w-full mt-2 bg-white hover:bg-amber-50 border-amber-200 text-amber-900 font-semibold cursor-pointer"
+                onClick={() => setSelfCustodyOpen(true)}
+              >
+                <Key className="h-4 w-4 mr-2 text-amber-600" />
+                Open / Create Self-Custody Vault
+              </Button>
+            </div>
+
             {/* Injected Connectors (MetaMask / Browser) */}
             <div className="space-y-2 pt-2">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-1">
@@ -317,6 +348,11 @@ export function ConnectWalletModal() {
           </div>
         )}
       </DialogContent>
+
+      <SelfCustodyModal
+        open={selfCustodyOpen}
+        onOpenChange={setSelfCustodyOpen}
+      />
     </Dialog>
   );
 }

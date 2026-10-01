@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowUpRight, Loader2, CheckCircle2, AlertCircle, ExternalLink, Zap, Layers, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { sendSolanaDevnetLamports } from "@/lib/solana";
+import { sendSelfCustodyTransaction } from "@/lib/self-custody";
 import { getApiUrl } from "@/lib/config";
 
 const EXPLORERS: Record<string, string> = {
@@ -41,7 +42,7 @@ export function SendModal() {
     setGaslessEnabled,
     setBatchSendOpen
   } = useUiStore();
-  const { isConnected, isDemo } = useWalletStore();
+  const { isConnected, isDemo, isSelfCustody, selfCustodyKey } = useWalletStore();
   const { address: wagmiAddress, isConnected: isWagmiConnected } = useAccount();
   const { sendTransactionAsync } = useSendTransaction();
   const queryClient = useQueryClient();
@@ -133,8 +134,22 @@ export function SendModal() {
         return;
       }
 
-      // 1. If connected via MetaMask / Injected Web3: broadcast real on-chain transaction!
-      if (isWagmiConnected && !isDemo) {
+      // 1. If Self-Custody account: broadcast directly signed on-chain transaction!
+      if (isSelfCustody && selfCustodyKey) {
+        const hash = await sendSelfCustodyTransaction({
+          privateKey: selfCustodyKey as `0x${string}`,
+          to: recipient.trim() as `0x${string}`,
+          amountEther: amount.trim(),
+          network: selectedNetwork,
+        });
+        setTxHash(hash);
+        toast.success("Self-custody transaction broadcast!", {
+          description: `Hash: ${hash.slice(0, 10)}...${hash.slice(-6)}`,
+        });
+        queryClient.invalidateQueries({ queryKey: ["testnet-balances"] });
+      }
+      // 2. If connected via MetaMask / Injected Web3: broadcast real on-chain transaction!
+      else if (isWagmiConnected && !isDemo) {
         const targetChainId = CHAIN_IDS[selectedNetwork];
         const hash = await sendTransactionAsync({
           to: recipient.trim() as `0x${string}`,
@@ -148,7 +163,7 @@ export function SendModal() {
         // Refresh balance query automatically
         queryClient.invalidateQueries({ queryKey: ["testnet-balances"] });
       } else {
-        // 2. Demo Mode fallback
+        // 3. Demo Mode fallback
         await new Promise((resolve) => setTimeout(resolve, 1500));
         const mockHash = "0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
         setTxHash(mockHash);

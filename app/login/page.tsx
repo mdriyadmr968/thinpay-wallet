@@ -16,10 +16,13 @@ import {
   ShieldCheck, 
   Loader2, 
   ArrowRight,
-  Fingerprint
+  Fingerprint,
+  Shield,
+  Key
 } from "lucide-react";
 import { getApiUrl } from "@/lib/config";
 import { createPasskeyCredential } from "@/lib/webauthn";
+import { SelfCustodyModal } from "@/components/wallet/SelfCustodyModal";
 import { toast } from "sonner";
 
 export default function LoginPage() {
@@ -30,6 +33,7 @@ export default function LoginPage() {
 
   const [demoLoading, setDemoLoading] = React.useState(false);
   const [passkeyLoading, setPasskeyLoading] = React.useState(false);
+  const [selfCustodyOpen, setSelfCustodyOpen] = React.useState(false);
 
   // If already connected, redirect straight to dashboard
   React.useEffect(() => {
@@ -197,6 +201,31 @@ export default function LoginPage() {
             </Button>
           </div>
 
+          {/* Option C: Self-Custody Vault (Seed Phrase / Private Key) */}
+          <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+                <Shield className="h-3.5 w-3.5 text-amber-600" />
+                Self-Custody Testnet Vault
+              </span>
+              <Badge variant="cyan" className="text-[10px] bg-amber-100 text-amber-800 border-amber-200">
+                100% User Owned
+              </Badge>
+            </div>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Create a new 12-word seed phrase or import your private key. Encrypted locally with your password using AES-256-GCM.
+            </p>
+            <Button
+              variant="secondary"
+              onClick={() => setSelfCustodyOpen(true)}
+              className="w-full h-11 text-xs font-semibold bg-white hover:bg-amber-50 border-amber-200 text-amber-900 shadow-xs cursor-pointer"
+            >
+              <Key className="h-4 w-4 mr-2 text-amber-600" />
+              Open / Create Self-Custody Vault
+              <ArrowRight className="h-4 w-4 ml-1.5" />
+            </Button>
+          </div>
+
           {/* Divider */}
           <div className="relative flex py-1 items-center">
             <div className="flex-grow border-t border-slate-200"></div>
@@ -234,6 +263,13 @@ export default function LoginPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Self-Custody Modal */}
+      <SelfCustodyModal
+        open={selfCustodyOpen}
+        onOpenChange={setSelfCustodyOpen}
+        onSuccess={() => router.push("/dashboard")}
+      />
     </div>
   );
 }

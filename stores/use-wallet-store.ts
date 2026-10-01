@@ -7,15 +7,18 @@ interface WalletState {
   isConnected: boolean;
   isDemo: boolean;
   isPasskey: boolean;
-  accountType: "eoa" | "smart_account" | "passkey";
+  isSelfCustody: boolean;
+  selfCustodyKey: string | null;
+  accountType: "eoa" | "smart_account" | "passkey" | "self_custody";
   jwtToken: string | null;
   solanaAddress: string | null;
   isSolanaConnected: boolean;
   isConnecting: boolean;
   connectModalOpen: boolean;
   setConnectModalOpen: (open: boolean) => void;
-  setWallet: (address: string, chainId: number, isDemo?: boolean, token?: string, accountType?: "eoa" | "smart_account" | "passkey") => void;
+  setWallet: (address: string, chainId: number, isDemo?: boolean, token?: string, accountType?: "eoa" | "smart_account" | "passkey" | "self_custody") => void;
   setPasskeyWallet: (address: string, chainId: number) => void;
+  setSelfCustodyWallet: (address: string, chainId: number, privateKey: string) => void;
   setSolanaWallet: (address: string) => void;
   disconnectSolana: () => void;
   setBalance: (balance: string) => void;
@@ -30,6 +33,8 @@ export const useWalletStore = create<WalletState>((set) => ({
   isConnected: false,
   isDemo: false,
   isPasskey: false,
+  isSelfCustody: false,
+  selfCustodyKey: null,
   accountType: "eoa",
   jwtToken: null,
   solanaAddress: null,
@@ -44,6 +49,7 @@ export const useWalletStore = create<WalletState>((set) => ({
       isConnected: true,
       isDemo,
       isPasskey: accountType === "passkey",
+      isSelfCustody: accountType === "self_custody",
       accountType,
       jwtToken: token || null,
       isConnecting: false,
@@ -56,7 +62,22 @@ export const useWalletStore = create<WalletState>((set) => ({
       isConnected: true,
       isDemo: false,
       isPasskey: true,
+      isSelfCustody: false,
+      selfCustodyKey: null,
       accountType: "passkey",
+      isConnecting: false,
+      connectModalOpen: false,
+    }),
+  setSelfCustodyWallet: (address, chainId, privateKey) =>
+    set({
+      address,
+      chainId,
+      isConnected: true,
+      isDemo: false,
+      isPasskey: false,
+      isSelfCustody: true,
+      selfCustodyKey: privateKey,
+      accountType: "self_custody",
       isConnecting: false,
       connectModalOpen: false,
     }),
@@ -80,6 +101,8 @@ export const useWalletStore = create<WalletState>((set) => ({
       isConnected: false,
       isDemo: false,
       isPasskey: false,
+      isSelfCustody: false,
+      selfCustodyKey: null,
       accountType: "eoa",
       jwtToken: null,
       solanaAddress: null,
