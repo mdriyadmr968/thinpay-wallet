@@ -10,9 +10,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUpRight, Loader2, CheckCircle2, AlertCircle, ExternalLink, Zap, Layers } from "lucide-react";
+import { ArrowUpRight, Loader2, CheckCircle2, AlertCircle, ExternalLink, Zap, Layers, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { sendSolanaDevnetLamports } from "@/lib/solana";
+import { getApiUrl } from "@/lib/config";
 
 const EXPLORERS: Record<string, string> = {
   sepolia: "https://sepolia.etherscan.io",
@@ -48,6 +49,8 @@ export function SendModal() {
   const [recipient, setRecipient] = React.useState("");
   const [amount, setAmount] = React.useState("");
   const [loading, setLoading] = React.useState(false);
+  const [simulating, setSimulating] = React.useState(false);
+  const [simulation, setSimulation] = React.useState<any | null>(null);
   const [txHash, setTxHash] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -57,6 +60,38 @@ export function SendModal() {
       if (sendPrefill.amount) setAmount(sendPrefill.amount);
     }
   }, [sendPrefill, isSendOpen]);
+
+  const handleSimulate = async () => {
+    if (!recipient.trim()) {
+      setError("Please enter a recipient address to simulate.");
+      return;
+    }
+    setSimulating(true);
+    setError(null);
+    try {
+      const res = await fetch(getApiUrl("/ai/simulate"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: recipient.trim(),
+          value: amount.trim() || "0",
+          chain: selectedNetwork,
+          sender: wagmiAddress || "0xUser",
+        }),
+      });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        setSimulation(json.simulation);
+        toast.success("AI Pre-flight simulation completed!");
+      } else {
+        toast.error("Simulation failed", { description: json.error });
+      }
+    } catch (err: any) {
+      toast.error("Simulation service error", { description: err?.message });
+    } finally {
+      setSimulating(false);
+    }
+  };
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -284,6 +319,60 @@ export function SendModal() {
                 <Layers className="h-3 w-3" />
                 Batch Multi-Send
               </button>
+            </div>
+
+            {/* AI Pre-Flight Transaction Simulation */}
+            <div className="pt-1">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
+                  Gemini Pre-Flight Security Check
+                </span>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={handleSimulate}
+                  disabled={simulating || !recipient}
+                  className="h-7 text-xs border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+                >
+                  {simulating ? (
+                    <>
+                      <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                      Simulating...
+                    </>
+                  ) : (
+                    "Simulate Tx"
+                  )}
+                </Button>
+              </div>
+
+              {simulation && (
+                <div className={`p-3 rounded-xl border text-xs space-y-1.5 transition-all ${
+                  simulation.riskLevel === "LOW"
+                    ? "bg-emerald-50/70 border-emerald-200 text-emerald-950"
+                    : simulation.riskLevel === "MEDIUM"
+                    ? "bg-amber-50/70 border-amber-200 text-amber-950"
+                    : "bg-rose-50/70 border-rose-200 text-rose-950"
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold flex items-center gap-1.5">
+                      Risk Level: 
+                      <Badge className={
+                        simulation.riskLevel === "LOW" ? "bg-emerald-600 text-white" :
+                        simulation.riskLevel === "MEDIUM" ? "bg-amber-600 text-white" : "bg-rose-600 text-white"
+                      }>
+                        {simulation.riskLevel}
+                      </Badge>
+                    </span>
+                    <span className="text-[11px] font-mono text-slate-600">
+                      Delta: {simulation.expectedBalanceChange}
+                    </span>
+                  </div>
+                  <p className="text-slate-700 text-[11px] leading-relaxed">{simulation.summary}</p>
+                  <p className="text-[11px] font-medium text-indigo-700">{simulation.recommendation}</p>
+                </div>
+              )}
             </div>
 
             {error && (

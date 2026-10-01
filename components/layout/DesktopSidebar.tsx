@@ -9,6 +9,7 @@ import {
   Layers, 
   Gift, 
   ShieldCheck, 
+  ShieldAlert,
   Sparkles,
   Droplets,
 } from "lucide-react";
@@ -23,6 +24,7 @@ const navItems = [
   { href: "/swap", label: "Swap & Bridge", icon: ArrowLeftRight },
   { href: "/baskets", label: "DeFi Baskets", icon: Layers },
   { href: "/airdrops", label: "Airdrops", icon: Gift },
+  { href: "/approvals", label: "Token Approvals", icon: ShieldAlert },
   { href: "/auditor", label: "AI Safety Auditor", icon: ShieldCheck, isAi: true },
 ];
 
