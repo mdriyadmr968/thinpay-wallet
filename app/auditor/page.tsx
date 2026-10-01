@@ -14,6 +14,7 @@ import {
   Loader2, 
   Cpu 
 } from "lucide-react";
+import { getApiUrl } from "@/lib/config";
 
 interface AuditResult {
   safetyScore: number;
@@ -43,7 +44,7 @@ export default function AuditorPage() {
     setResult(null);
 
     try {
-      const res = await fetch("http://127.0.0.1:5000/api/v1/ai/audit", {
+      const res = await fetch(getApiUrl("/ai/audit"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ address: target, chain }),

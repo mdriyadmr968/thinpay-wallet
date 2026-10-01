@@ -21,9 +21,25 @@ const BASE_TESTNET_RATES: Record<string, number> = {
   THIN: 0.15,
 };
 
+const KNOWN_ADDRESS_TO_SYMBOL: Record<string, string> = {
+  '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee': 'ETH',
+  '0x0000000000000000000000000000000000000000': 'ETH',
+  '0x1c7d4b196cb0c7b01d743fbc6116a902379c7238': 'USDC',
+  '0x0000000000000000000000000000000000001010': 'POL',
+  '0x779877a7b0d9e8603169ddbd7836e478b4624789': 'LINK',
+};
+
+function resolveSymbol(token: string): string {
+  const normalized = token.toLowerCase();
+  if (KNOWN_ADDRESS_TO_SYMBOL[normalized]) {
+    return KNOWN_ADDRESS_TO_SYMBOL[normalized];
+  }
+  return token.toUpperCase();
+}
+
 export async function getSwapQuote(params: SwapQuoteParams) {
   const { chain, fromToken, toToken, fromAmount, slippagePercentage = 1 } = params;
-  const cacheKey = `quote_${chain}_${fromToken}_${toToken}_${fromAmount}`;
+  const cacheKey = `quote_${chain}_${fromToken}_${toToken}_${fromAmount}_${slippagePercentage}`;
 
   return getOrSetCache(rpcCache, cacheKey, async () => {
     const amountNum = parseFloat(fromAmount);
@@ -31,8 +47,11 @@ export async function getSwapQuote(params: SwapQuoteParams) {
       throw new Error('Invalid fromAmount provided.');
     }
 
-    const fromRate = BASE_TESTNET_RATES[fromToken.toUpperCase()] || 1.0;
-    const toRate = BASE_TESTNET_RATES[toToken.toUpperCase()] || 1.0;
+    const resolvedFrom = resolveSymbol(fromToken);
+    const resolvedTo = resolveSymbol(toToken);
+
+    const fromRate = BASE_TESTNET_RATES[resolvedFrom] || 1.0;
+    const toRate = BASE_TESTNET_RATES[resolvedTo] || 1.0;
 
     // Exchange rate = fromRate / toRate
     const exchangeRate = fromRate / toRate;
@@ -50,8 +69,8 @@ export async function getSwapQuote(params: SwapQuoteParams) {
 
     return {
       chain,
-      fromToken: fromToken.toUpperCase(),
-      toToken: toToken.toUpperCase(),
+      fromToken: resolvedFrom,
+      toToken: resolvedTo,
       fromAmount,
       toAmount: netToAmount,
       minimumReceived,

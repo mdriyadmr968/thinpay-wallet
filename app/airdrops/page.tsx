@@ -6,18 +6,18 @@ import { fetchGraphQL } from "@/lib/graphql/client";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Gift, CheckCircle2, Loader2, Database } from "lucide-react";
+import { Gift, CheckCircle2, Loader2, Database, ExternalLink, Sparkles } from "lucide-react";
+import { toast } from "sonner";
 
 interface CampaignItem {
   id: string;
   title: string;
-  description: string;
-  protocol: string;
-  network: string;
+  tokenSymbol: string;
   rewardAmount: string;
-  rewardToken: string;
-  criteria: any;
+  criteria?: string;
+  faucetUrl?: string;
   isActive: boolean;
+  expiresAt?: string;
 }
 
 const AIRDROPS_QUERY = `
@@ -25,20 +25,74 @@ const AIRDROPS_QUERY = `
     airdropCampaigns {
       id
       title
-      description
-      protocol
-      network
+      tokenSymbol
       rewardAmount
-      rewardToken
       criteria
+      faucetUrl
       isActive
+      expiresAt
     }
   }
 `;
 
+const FALLBACK_CAMPAIGNS: CampaignItem[] = [
+  {
+    id: "1",
+    title: "Sepolia Stakers Retroactive",
+    tokenSymbol: "ETH",
+    rewardAmount: "0.05",
+    criteria: "Hold > 0.01 Sepolia ETH; Perform testnet swap",
+    faucetUrl: "https://cloud.google.com/application/web3/faucet/ethereum/sepolia",
+    isActive: true,
+  },
+  {
+    id: "2",
+    title: "Polygon Amoy Early Adopter Drop",
+    tokenSymbol: "POL",
+    rewardAmount: "25",
+    criteria: "Connected to Polygon Amoy RPC; Verified account on Neon DB",
+    faucetUrl: "https://faucet.polygon.technology/",
+    isActive: true,
+  },
+  {
+    id: "3",
+    title: "Solana Devnet Liquidity Sprint",
+    tokenSymbol: "SOL",
+    rewardAmount: "2.0",
+    criteria: "Active Solana Devnet address; Request airdrop from devnet faucet",
+    faucetUrl: "https://faucet.solana.com/",
+    isActive: true,
+  },
+];
+
+function parseCriteria(criteria?: string): string[] {
+  if (!criteria) return ["Hold testnet balance", "Interact with protocol"];
+  try {
+    const parsed = JSON.parse(criteria);
+    if (Array.isArray(parsed)) return parsed;
+    if (parsed.requirements && Array.isArray(parsed.requirements)) return parsed.requirements;
+  } catch {
+    if (criteria.includes(";")) return criteria.split(";").map((s) => s.trim());
+    return [criteria];
+  }
+  return ["Hold testnet balance"];
+}
+
 export default function AirdropsPage() {
   const [claimingId, setClaimingId] = React.useState<string | null>(null);
   const [claimedList, setClaimedList] = React.useState<string[]>([]);
+
+  // Load persisted claims from localStorage on mount
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem("thinpay_claimed_airdrops");
+      if (saved) {
+        setClaimedList(JSON.parse(saved));
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const { data: campaigns, isLoading } = useQuery({
     queryKey: ["airdrop-campaigns"],
@@ -51,41 +105,7 @@ export default function AirdropsPage() {
       } catch (e) {
         console.warn("GraphQL airdrop lookup fallback:", e);
       }
-      return [
-        {
-          id: "1",
-          title: "Sepolia Stakers Retroactive",
-          protocol: "ThinPay Protocol",
-          network: "Ethereum Sepolia",
-          rewardAmount: "500",
-          rewardToken: "TPAY",
-          description: "Distributed to early testnet wallets maintaining an active staking balance.",
-          criteria: { requirements: ["Hold > 0.05 Sepolia ETH", "Performed at least 1 swap"] },
-          isActive: true,
-        },
-        {
-          id: "2",
-          title: "Polygon Amoy Early Adopter Drop",
-          protocol: "Amoy Scaling Hub",
-          network: "Polygon Amoy",
-          rewardAmount: "1200",
-          rewardToken: "AMOY",
-          description: "Incentivizing smart contract testers on Polygon's next-generation PoS testnet.",
-          criteria: { requirements: ["Connected to Polygon Amoy RPC", "Verified account on Neon DB"] },
-          isActive: true,
-        },
-        {
-          id: "3",
-          title: "Solana Devnet Liquidity Sprint",
-          protocol: "Solana Foundation Testnet",
-          network: "Solana Devnet",
-          rewardAmount: "25",
-          rewardToken: "sSOL",
-          description: "Rewards for testing SPL cross-chain bridge and lamport transfers.",
-          criteria: { requirements: ["Active Solana Devnet address", "Airdrop requested from devnet faucet"] },
-          isActive: true,
-        },
-      ];
+      return FALLBACK_CAMPAIGNS;
     },
     staleTime: 1000 * 60 * 5,
   });
@@ -94,7 +114,18 @@ export default function AirdropsPage() {
     setClaimingId(id);
     try {
       await new Promise((r) => setTimeout(r, 1200));
-      setClaimedList((prev) => [...prev, id]);
+      setClaimedList((prev) => {
+        const next = [...prev, id];
+        try {
+          localStorage.setItem("thinpay_claimed_airdrops", JSON.stringify(next));
+        } catch {
+          // ignore
+        }
+        return next;
+      });
+      toast.success("Airdrop claimed successfully!", {
+        description: "Your testnet allocation has been registered.",
+      });
     } finally {
       setClaimingId(null);
     }
@@ -127,7 +158,8 @@ export default function AirdropsPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {(campaigns || []).map((camp) => {
             const isClaimed = claimedList.includes(camp.id);
-            const reqs: string[] = camp.criteria?.requirements || ["Hold testnet balance"];
+            const reqs = parseCriteria(camp.criteria);
+
             return (
               <Card key={camp.id} className="bg-white border-slate-200/90 shadow-xs flex flex-col justify-between hover:shadow-md hover:-translate-y-0.5 transition-all">
                 <CardHeader className="pb-3">
@@ -136,18 +168,19 @@ export default function AirdropsPage() {
                       {isClaimed ? "Claimed" : camp.isActive ? "Active" : "Upcoming"}
                     </Badge>
                     <span className="text-xs font-bold text-emerald-700 font-mono">
-                      {camp.rewardAmount} ${camp.rewardToken}
+                      {camp.rewardAmount} ${camp.tokenSymbol}
                     </span>
                   </div>
                   <CardTitle className="text-base font-bold text-slate-900">{camp.title}</CardTitle>
-                  <div className="text-xs text-slate-400 font-mono mt-0.5">{camp.network}</div>
-                  <p className="text-xs text-slate-500 mt-2 leading-relaxed">{camp.description}</p>
+                  <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                    Testnet allocation incentive. Claim tokens to your testnet wallet or request funds directly from the official faucet.
+                  </p>
                 </CardHeader>
 
                 <CardContent className="space-y-3">
                   <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-1.5">
                     <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-                      Criteria
+                      Eligibility Criteria
                     </span>
                     {reqs.map((req, i) => (
                       <div key={i} className="text-xs text-slate-700 flex items-center gap-2 font-medium">
@@ -156,6 +189,20 @@ export default function AirdropsPage() {
                       </div>
                     ))}
                   </div>
+
+                  {camp.faucetUrl && (
+                    <div className="pt-1">
+                      <a
+                        href={camp.faucetUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs text-sky-600 hover:text-sky-700 font-semibold hover:underline"
+                      >
+                        <span>Official Faucet Link</span>
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                    </div>
+                  )}
                 </CardContent>
 
                 <CardFooter className="pt-0">
@@ -176,7 +223,7 @@ export default function AirdropsPage() {
                         Claiming Drop...
                       </>
                     ) : (
-                      `Claim ${camp.rewardAmount} $${camp.rewardToken}`
+                      `Claim ${camp.rewardAmount} $${camp.tokenSymbol}`
                     )}
                   </Button>
                 </CardFooter>

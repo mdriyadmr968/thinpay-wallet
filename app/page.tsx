@@ -22,6 +22,7 @@ import {
   Cpu
 } from "lucide-react";
 import { formatAddress } from "@/lib/utils";
+import { getApiUrl } from "@/lib/config";
 
 const TESTNETS = [
   { name: "Ethereum Sepolia", symbol: "ETH", chainId: "11155111" },
@@ -92,7 +93,7 @@ export default function LandingPage() {
 
   const handleQuickDemo = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:5000/api/v1/auth/demo-login", { method: "POST" });
+      const res = await fetch(getApiUrl("/auth/demo-login"), { method: "POST" });
       if (res.ok) {
         const data = await res.json();
         const demoAddr = data.user?.walletAddress || data.user?.address || "0x71c8360f3a8b4119d691e84c0f0811ef78b40b64";

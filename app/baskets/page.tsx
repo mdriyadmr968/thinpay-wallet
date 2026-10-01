@@ -36,6 +36,7 @@ import {
   Info
 } from "lucide-react";
 import { formatAddress } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface BasketToken {
   symbol: string;
@@ -306,10 +307,15 @@ export default function BasketsPage() {
       savePositions([newPosition, ...positions]);
 
       setSuccessInfo({ id: basket.id, txHash: finalHash, symbol: basket.symbol });
+      toast.success(`Subscribed ${investAmount} ETH to ${basket.name}!`, {
+        description: `Tx: ${finalHash.slice(0, 10)}...${finalHash.slice(-6)}`,
+      });
       queryClient.invalidateQueries({ queryKey: ["testnet-balances"] });
     } catch (err: any) {
       console.error("Investment error:", err);
-      setError(err?.shortMessage || err?.message || "Investment transaction rejected or failed.");
+      const msg = err?.shortMessage || err?.message || "Investment transaction rejected or failed.";
+      setError(msg);
+      toast.error("Investment failed", { description: msg });
     } finally {
       setInvestingId(null);
     }
@@ -318,6 +324,7 @@ export default function BasketsPage() {
   const handleRedeem = (posId: string) => {
     const updated = positions.filter((p) => p.id !== posId);
     savePositions(updated);
+    toast.success("Position redeemed successfully!");
     queryClient.invalidateQueries({ queryKey: ["testnet-balances"] });
   };
 
@@ -346,8 +353,11 @@ export default function BasketsPage() {
       setCreateModalOpen(false);
       setNewBasketName("");
       setNewBasketDesc("");
+      toast.success("Basket created and published to Neon DB!");
     } catch (err: any) {
-      setError(err?.message || "Failed to create basket in database.");
+      const msg = err?.message || "Failed to create basket in database.";
+      setError(msg);
+      toast.error("Creation failed", { description: msg });
     } finally {
       setCreateLoading(false);
     }

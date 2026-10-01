@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Wallet, Sparkles, Check, Copy, ExternalLink, Loader2, KeyRound } from "lucide-react";
 import { formatAddress } from "@/lib/utils";
+import { getApiUrl } from "@/lib/config";
 
 export function ConnectWalletModal() {
   const { 
@@ -58,7 +59,7 @@ export function ConnectWalletModal() {
     }
     try {
       // Call backend demo login
-      const res = await fetch("http://127.0.0.1:5000/api/v1/auth/demo-login", {
+      const res = await fetch(getApiUrl("/auth/demo-login"), {
         method: "POST",
       });
       if (res.ok) {

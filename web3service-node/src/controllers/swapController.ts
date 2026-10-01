@@ -13,7 +13,29 @@ const swapQuoteSchema = z.object({
 
 export async function getQuote(req: Request, res: Response, next: NextFunction) {
   try {
-    const validated = swapQuoteSchema.parse(req.body);
+    // Support both GET (query parameters) and POST (body parameters)
+    const rawData = req.method === 'GET' ? req.query : req.body;
+
+    // Normalize field names (support both 0x style and ThinPay style)
+    const chain = (rawData.chain || rawData.chainId || 'sepolia').toString();
+    const fromToken = (rawData.fromToken || rawData.sellToken || '').toString();
+    const toToken = (rawData.toToken || rawData.buyToken || '').toString();
+    const fromAmount = (rawData.fromAmount || rawData.sellAmount || '0.005').toString();
+    const slippagePercentage = rawData.slippagePercentage 
+      ? parseFloat(rawData.slippagePercentage.toString()) 
+      : rawData.slippage 
+      ? parseFloat(rawData.slippage.toString()) 
+      : 1;
+
+    const validated = swapQuoteSchema.parse({
+      chain,
+      fromToken,
+      toToken,
+      fromAmount,
+      slippagePercentage,
+      takerAddress: rawData.takerAddress ? rawData.takerAddress.toString() : undefined,
+    });
+
     const quote = await getSwapQuote(validated);
 
     return res.json({

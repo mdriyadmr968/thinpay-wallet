@@ -5,6 +5,7 @@ import { useAccount } from "wagmi";
 import { useWalletStore } from "@/stores/use-wallet-store";
 import { createPublicClient, http, formatEther } from "viem";
 import { sepolia, polygonAmoy, bscTestnet, baseSepolia } from "viem/chains";
+import { getApiUrl } from "@/lib/config";
 
 export interface ChainBalance {
   chainId: string;
@@ -83,7 +84,7 @@ export function useTestnetBalances() {
           // 1. Try backend API first
           try {
             const res = await fetch(
-              `http://127.0.0.1:5000/api/v1/wallet/${chain.id}/${activeAddress}/balance`
+              getApiUrl(`/wallet/${chain.id}/${activeAddress}/balance`)
             );
             if (res.ok) {
               const data = await res.json();

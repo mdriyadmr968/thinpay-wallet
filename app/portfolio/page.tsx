@@ -16,8 +16,35 @@ import {
   Loader2
 } from "lucide-react";
 import { formatUsd } from "@/lib/utils";
+import { useWalletStore } from "@/stores/use-wallet-store";
+import { useAccount } from "wagmi";
+import { useQuery } from "@tanstack/react-query";
+import { fetchGraphQL } from "@/lib/graphql/client";
 
-const RECENT_TRANSACTIONS = [
+function getChainName(chainId: number) {
+  switch (chainId) {
+    case 11155111: return "Sepolia";
+    case 80002: return "Polygon Amoy";
+    case 97: return "BSC Testnet";
+    case 84532: return "Base Sepolia";
+    case 101: return "Solana Devnet";
+    default: return `Chain ${chainId}`;
+  }
+}
+
+function formatTimeAgo(isoString: string) {
+  try {
+    const diff = (Date.now() - new Date(isoString).getTime()) / 1000;
+    if (diff < 60) return "Just now";
+    if (diff < 3600) return `${Math.floor(diff / 60)} mins ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+    return `${Math.floor(diff / 86400)} days ago`;
+  } catch {
+    return "Recent";
+  }
+}
+
+const FALLBACK_TRANSACTIONS = [
   { id: "1", type: "Received", asset: "0.25 ETH", chain: "Sepolia", from: "0x71c...99b", time: "10 mins ago", status: "Confirmed" },
   { id: "2", type: "Swapped", asset: "0.05 ETH → 25 POL", chain: "Polygon Amoy", from: "ThinPay 0x Router", time: "2 hours ago", status: "Confirmed" },
   { id: "3", type: "DeFi Basket", asset: "Subscribed 0.1 ETH", chain: "Base Sepolia", from: "Layer2 Giants Basket", time: "1 day ago", status: "Confirmed" },
@@ -26,6 +53,38 @@ const RECENT_TRANSACTIONS = [
 export default function PortfolioPage() {
   const { setSendOpen, setReceiveOpen } = useUiStore();
   const { balances, totalUsd, isLoading, refetch, isRefetching } = useTestnetBalances();
+  const { address: storeAddress } = useWalletStore();
+  const { address: wagmiAddress } = useAccount();
+
+  const activeAddress = wagmiAddress || storeAddress;
+
+  const { data: graphTxs, isLoading: isTxsLoading } = useQuery({
+    queryKey: ["portfolio-transactions", activeAddress],
+    queryFn: async () => {
+      try {
+        const res = await fetchGraphQL<{ transactions: Array<any> }>(
+          `query GetTransactions($address: String) {
+            transactions(address: $address, limit: 10) {
+              id
+              hash
+              chainId
+              fromAddress
+              toAddress
+              amount
+              tokenSymbol
+              status
+              createdAt
+            }
+          }`,
+          { address: activeAddress || undefined }
+        );
+        return res?.transactions || [];
+      } catch (err) {
+        console.warn("Failed fetching GraphQL transactions:", err);
+        return [];
+      }
+    },
+  });
 
   return (
     <div className="space-y-6">
@@ -177,18 +236,48 @@ export default function PortfolioPage() {
         </CardHeader>
         <CardContent>
           <div className="divide-y divide-slate-100">
-            {RECENT_TRANSACTIONS.map((tx) => (
-              <div key={tx.id} className="py-3.5 flex items-center justify-between text-xs">
-                <div>
-                  <div className="font-semibold text-slate-900">{tx.type} • {tx.asset}</div>
-                  <div className="text-[11px] text-slate-500 mt-0.5">{tx.chain} • {tx.from}</div>
+            {graphTxs && graphTxs.length > 0 ? (
+              graphTxs.map((tx: any) => {
+                const isSent = tx.fromAddress?.toLowerCase() === activeAddress?.toLowerCase();
+                return (
+                  <div key={tx.id || tx.hash} className="py-3.5 flex items-center justify-between text-xs">
+                    <div>
+                      <div className="font-semibold text-slate-900 flex items-center gap-1.5">
+                        <span className={isSent ? "text-amber-600 font-bold" : "text-emerald-600 font-bold"}>
+                          {isSent ? "Sent" : "Received"}
+                        </span>
+                        <span>•</span>
+                        <span>{tx.amount} {tx.tokenSymbol}</span>
+                      </div>
+                      <div className="text-[11px] text-slate-500 mt-0.5 font-mono">
+                        {getChainName(tx.chainId)} • {tx.hash ? `${tx.hash.slice(0, 10)}...${tx.hash.slice(-6)}` : "Internal"}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <Badge variant="default" className="text-[10px] capitalize">
+                        {tx.status || "Confirmed"}
+                      </Badge>
+                      <div className="text-[10px] text-slate-400 mt-1 font-medium">
+                        {formatTimeAgo(tx.createdAt)}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              FALLBACK_TRANSACTIONS.map((tx) => (
+                <div key={tx.id} className="py-3.5 flex items-center justify-between text-xs">
+                  <div>
+                    <div className="font-semibold text-slate-900">{tx.type} • {tx.asset}</div>
+                    <div className="text-[11px] text-slate-500 mt-0.5">{tx.chain} • {tx.from}</div>
+                  </div>
+                  <div className="text-right">
+                    <Badge variant="default" className="text-[10px]">{tx.status}</Badge>
+                    <div className="text-[10px] text-slate-400 mt-1 font-medium">{tx.time}</div>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <Badge variant="default" className="text-[10px]">{tx.status}</Badge>
-                  <div className="text-[10px] text-slate-400 mt-1 font-medium">{tx.time}</div>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </CardContent>
       </Card>

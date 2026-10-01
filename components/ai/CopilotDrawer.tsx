@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, Send, Bot, ArrowUpRight, ArrowLeftRight, ShieldCheck, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { getApiUrl } from "@/lib/config";
 
 interface Message {
   role: "user" | "copilot";
@@ -29,7 +30,7 @@ const INITIAL_MESSAGES: Message[] = [
 ];
 
 export function CopilotDrawer() {
-  const { isCopilotOpen, setCopilotOpen, setSendOpen, selectedNetwork } = useUiStore();
+  const { isCopilotOpen, setCopilotOpen, setSendOpen, setSendPrefill, selectedNetwork } = useUiStore();
   const { address: storeAddress } = useWalletStore();
   const { address: wagmiAddress } = useAccount();
   const { balances, totalUsd } = useTestnetBalances();
@@ -62,7 +63,7 @@ export function CopilotDrawer() {
         totalUsd: `$${totalUsd.toFixed(2)}`,
       };
 
-      const res = await fetch("http://127.0.0.1:5000/api/v1/ai/copilot", {
+      const res = await fetch(getApiUrl("/ai/copilot"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userText, context: liveContext }),
@@ -148,6 +149,13 @@ export function CopilotDrawer() {
                       size="sm"
                       variant="gradient"
                       onClick={() => {
+                        if (msg.action?.payload) {
+                          setSendPrefill({
+                            recipient: msg.action.payload.recipient || "",
+                            amount: msg.action.payload.amount ? String(msg.action.payload.amount) : "",
+                            network: msg.action.payload.network || selectedNetwork,
+                          });
+                        }
                         setCopilotOpen(false);
                         setSendOpen(true);
                       }}

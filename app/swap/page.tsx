@@ -17,6 +17,8 @@ import {
   ExternalLink,
   AlertCircle
 } from "lucide-react";
+import { getApiUrl } from "@/lib/config";
+import { toast } from "sonner";
 
 interface TokenInfo {
   symbol: string;
@@ -69,15 +71,18 @@ export default function SwapPage() {
       try {
         const rawAmount = (val * 10 ** fromToken.decimals).toLocaleString("fullwide", { useGrouping: false });
         const res = await fetch(
-          `http://127.0.0.1:5000/api/v1/swap/quote?buyToken=${toToken.address}&sellToken=${fromToken.address}&sellAmount=${rawAmount}&chainId=${fromToken.chainId}`
+          getApiUrl(`/swap/quote?fromToken=${fromToken.symbol}&toToken=${toToken.symbol}&fromAmount=${fromAmount}&chain=${fromToken.chain.toLowerCase().replace(/ /g, "_")}&slippagePercentage=${slippage}`)
         );
         if (res.ok && active) {
           const data = await res.json();
-          if (data.quote && data.quote.buyAmount) {
-            const outVal = parseFloat(data.quote.buyAmount) / 10 ** toToken.decimals;
+          const quote = data.data || data.quote;
+          if (quote && (quote.toAmount || quote.buyAmount)) {
+            const outVal = quote.toAmount 
+              ? parseFloat(quote.toAmount) 
+              : parseFloat(quote.buyAmount) / 10 ** toToken.decimals;
             setToAmount(outVal.toFixed(4));
-            if (data.quote.estimatedGas) {
-              setGasEstimate(`${data.quote.estimatedGas} gas`);
+            if (quote.estimatedGasUnits || quote.estimatedGas) {
+              setGasEstimate(`${quote.estimatedGasUnits || quote.estimatedGas} gas`);
             }
           }
         }
@@ -124,19 +129,26 @@ export default function SwapPage() {
         const hash = await sendTransactionAsync({
           to: targetTo,
           value: parseEther(fromAmount),
+          chainId: fromToken.chainId,
         });
         setTxHash(hash);
+        toast.success("Swap submitted on testnet!", {
+          description: `Swapped ${fromAmount} ${fromToken.symbol} on ${fromToken.chain}`,
+        });
         queryClient.invalidateQueries({ queryKey: ["testnet-balances"] });
       } else {
         // Demo simulation
         await new Promise((r) => setTimeout(r, 1500));
         const mockHash = "0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
         setTxHash(mockHash);
+        toast.success("Demo swap simulated successfully!");
         queryClient.invalidateQueries({ queryKey: ["testnet-balances"] });
       }
     } catch (err: any) {
       console.error("Swap execution error:", err);
-      setError(err?.shortMessage || err?.message || "Swap rejected or failed.");
+      const msg = err?.shortMessage || err?.message || "Swap rejected or failed.";
+      setError(msg);
+      toast.error("Swap failed", { description: msg });
     } finally {
       setSwapLoading(false);
     }

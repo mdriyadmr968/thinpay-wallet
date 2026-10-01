@@ -73,8 +73,10 @@ Provide an honest security assessment as valid JSON with NO MARKDOWN, NO CODEBLO
 }`;
 
     const result = await model.generateContent(prompt);
-    const text = result.response.text().trim().replace(/^```json/, "").replace(/```$/, "").trim();
-    const parsed: AuditResult = JSON.parse(text);
+    const raw = result.response.text().trim();
+    const match = raw.match(/\{[\s\S]*\}/);
+    const clean = match ? match[0] : raw.replace(/^```json/i, "").replace(/^```/, "").replace(/```$/, "").trim();
+    const parsed: AuditResult = JSON.parse(clean);
 
     // Save to Neon DB cache
     try {
@@ -145,7 +147,8 @@ Instructions:
 
     const result = await model.generateContent(prompt);
     const raw = result.response.text().trim();
-    const clean = raw.replace(/^```json/i, "").replace(/^```/, "").replace(/```$/, "").trim();
+    const match = raw.match(/\{[\s\S]*\}/);
+    const clean = match ? match[0] : raw.replace(/^```json/i, "").replace(/^```/, "").replace(/```$/, "").trim();
     return JSON.parse(clean);
   } catch (error) {
     console.error("Gemini Copilot chat error:", error);

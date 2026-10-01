@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ArrowUpRight, Loader2, CheckCircle2, AlertCircle, ExternalLink } from "lucide-react";
+import { toast } from "sonner";
 
 const EXPLORERS: Record<string, string> = {
   sepolia: "https://sepolia.etherscan.io",
@@ -20,8 +21,15 @@ const EXPLORERS: Record<string, string> = {
   solana_devnet: "https://explorer.solana.com?cluster=devnet",
 };
 
+const CHAIN_IDS: Record<string, number> = {
+  sepolia: 11155111,
+  amoy: 80002,
+  bsc_testnet: 97,
+  base_sepolia: 84532,
+};
+
 export function SendModal() {
-  const { isSendOpen, setSendOpen, selectedNetwork } = useUiStore();
+  const { isSendOpen, setSendOpen, selectedNetwork, sendPrefill, setSendPrefill } = useUiStore();
   const { isConnected, isDemo } = useWalletStore();
   const { address: wagmiAddress, isConnected: isWagmiConnected } = useAccount();
   const { sendTransactionAsync } = useSendTransaction();
@@ -32,6 +40,13 @@ export function SendModal() {
   const [loading, setLoading] = React.useState(false);
   const [txHash, setTxHash] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (sendPrefill && isSendOpen) {
+      if (sendPrefill.recipient) setRecipient(sendPrefill.recipient);
+      if (sendPrefill.amount) setAmount(sendPrefill.amount);
+    }
+  }, [sendPrefill, isSendOpen]);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,11 +73,16 @@ export function SendModal() {
     try {
       // 1. If connected via MetaMask / Injected Web3: broadcast real on-chain transaction!
       if (isWagmiConnected && !isDemo) {
+        const targetChainId = CHAIN_IDS[selectedNetwork];
         const hash = await sendTransactionAsync({
           to: recipient.trim() as `0x${string}`,
           value: parseEther(amount.trim()),
+          ...(targetChainId ? { chainId: targetChainId } : {}),
         });
         setTxHash(hash);
+        toast.success("Transaction submitted on testnet!", {
+          description: `Hash: ${hash.slice(0, 10)}...${hash.slice(-6)}`,
+        });
         // Refresh balance query automatically
         queryClient.invalidateQueries({ queryKey: ["testnet-balances"] });
       } else {
@@ -70,11 +90,14 @@ export function SendModal() {
         await new Promise((resolve) => setTimeout(resolve, 1500));
         const mockHash = "0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
         setTxHash(mockHash);
+        toast.success("Demo transaction simulated successfully!");
         queryClient.invalidateQueries({ queryKey: ["testnet-balances"] });
       }
     } catch (err: any) {
       console.error("Send transaction error:", err);
-      setError(err?.shortMessage || err?.message || "Transaction rejected or failed.");
+      const msg = err?.shortMessage || err?.message || "Transaction rejected or failed.";
+      setError(msg);
+      toast.error("Transaction failed", { description: msg });
     } finally {
       setLoading(false);
     }
@@ -85,6 +108,7 @@ export function SendModal() {
     setRecipient("");
     setAmount("");
     setError(null);
+    setSendPrefill(null);
   };
 
   const explorerBase = EXPLORERS[selectedNetwork] || "https://sepolia.etherscan.io";

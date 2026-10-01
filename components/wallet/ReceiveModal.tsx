@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Copy, Check, ArrowDownLeft, ExternalLink } from "lucide-react";
+import { toast } from "sonner";
 
 const EXPLORERS: Record<string, string> = {
   sepolia: "https://sepolia.etherscan.io",
@@ -28,6 +29,7 @@ export function ReceiveModal() {
   const handleCopy = () => {
     navigator.clipboard.writeText(activeAddress);
     setCopied(true);
+    toast.success("Wallet address copied to clipboard!");
     setTimeout(() => setCopied(false), 2000);
   };
 

@@ -17,6 +17,7 @@ import {
   Loader2, 
   ArrowRight
 } from "lucide-react";
+import { getApiUrl } from "@/lib/config";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -36,7 +37,7 @@ export default function LoginPage() {
   const handleDemoLogin = async () => {
     setDemoLoading(true);
     try {
-      const res = await fetch("http://127.0.0.1:5000/api/v1/auth/demo-login", {
+      const res = await fetch(getApiUrl("/auth/demo-login"), {
         method: "POST",
       });
       if (res.ok) {
