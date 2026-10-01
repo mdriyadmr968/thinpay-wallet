@@ -15,17 +15,21 @@ import {
   ArrowLeft, 
   ShieldCheck, 
   Loader2, 
-  ArrowRight
+  ArrowRight,
+  Fingerprint
 } from "lucide-react";
 import { getApiUrl } from "@/lib/config";
+import { createPasskeyCredential } from "@/lib/webauthn";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { setWallet, isConnected, isDemo } = useWalletStore();
+  const { setWallet, setPasskeyWallet, isConnected, isDemo } = useWalletStore();
   const { isConnected: isWagmiConnected } = useAccount();
   const { connectors, connect, isPending } = useConnect();
 
   const [demoLoading, setDemoLoading] = React.useState(false);
+  const [passkeyLoading, setPasskeyLoading] = React.useState(false);
 
   // If already connected, redirect straight to dashboard
   React.useEffect(() => {
@@ -33,6 +37,22 @@ export default function LoginPage() {
       router.push("/dashboard");
     }
   }, [isConnected, isWagmiConnected, router]);
+
+  const handlePasskeyLogin = async () => {
+    setPasskeyLoading(true);
+    try {
+      const res = await createPasskeyCredential("ThinPay User");
+      setPasskeyWallet(res.smartAccountAddress, 11155111);
+      toast.success("Passkey Authenticated!", {
+        description: `Smart Account: ${res.smartAccountAddress.slice(0, 10)}...`,
+      });
+      router.push("/dashboard");
+    } catch (err: any) {
+      toast.error("Passkey authentication failed", { description: err?.message });
+    } finally {
+      setPasskeyLoading(false);
+    }
+  };
 
   const handleDemoLogin = async () => {
     setDemoLoading(true);
@@ -136,6 +156,41 @@ export default function LoginPage() {
                 <>
                   <KeyRound className="h-4 w-4 mr-2" />
                   Launch Instant Demo & Enter Dashboard
+                  <ArrowRight className="h-4 w-4 ml-1.5" />
+                </>
+              )}
+            </Button>
+          </div>
+
+          {/* Option B: Passkey Biometric Smart Account */}
+          <div className="rounded-2xl border border-purple-200 bg-purple-50/60 p-4 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-purple-900 flex items-center gap-1.5">
+                <Fingerprint className="h-3.5 w-3.5 text-purple-600" />
+                Passkey Smart Account (ERC-4337)
+              </span>
+              <Badge variant="cyan" className="text-[10px] bg-purple-100 text-purple-800 border-purple-200">
+                Biometric Login
+              </Badge>
+            </div>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Log in with Windows Hello, Touch ID, or Face ID. Zero seed phrase, sponsored gas by ThinPay Paymaster.
+            </p>
+            <Button
+              variant="secondary"
+              onClick={handlePasskeyLogin}
+              disabled={passkeyLoading}
+              className="w-full h-11 text-xs font-semibold bg-white hover:bg-purple-50 border-purple-200 text-purple-900 shadow-xs cursor-pointer"
+            >
+              {passkeyLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Authenticating Biometrics...
+                </>
+              ) : (
+                <>
+                  <Fingerprint className="h-4 w-4 mr-2 text-purple-600" />
+                  Sign In with Passkey / Face ID
                   <ArrowRight className="h-4 w-4 ml-1.5" />
                 </>
               )}

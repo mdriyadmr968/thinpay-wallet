@@ -5,10 +5,11 @@ import { useConnect, useAccount, useDisconnect, useSignMessage } from "wagmi";
 import { useWalletStore } from "@/stores/use-wallet-store";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Wallet, Sparkles, Check, Copy, ExternalLink, Loader2, KeyRound } from "lucide-react";
+import { Wallet, Sparkles, Check, Copy, ExternalLink, Loader2, KeyRound, Fingerprint } from "lucide-react";
 import { formatAddress } from "@/lib/utils";
 import { getApiUrl } from "@/lib/config";
+import { createPasskeyCredential } from "@/lib/webauthn";
+import { toast } from "sonner";
 
 export function ConnectWalletModal() {
   const { 
@@ -17,7 +18,9 @@ export function ConnectWalletModal() {
     setWallet, 
     isConnected, 
     isDemo, 
+    isPasskey,
     address, 
+    setPasskeyWallet,
     disconnect: disconnectStore 
   } = useWalletStore();
   
@@ -25,7 +28,26 @@ export function ConnectWalletModal() {
   const { address: wagmiAddress, isConnected: isWagmiConnected, chainId } = useAccount();
   const { disconnect: disconnectWagmi } = useDisconnect();
   const [demoLoading, setDemoLoading] = React.useState(false);
+  const [passkeyLoading, setPasskeyLoading] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
+
+  const handlePasskeyConnect = async () => {
+    setPasskeyLoading(true);
+    if (isWagmiConnected) {
+      disconnectWagmi();
+    }
+    try {
+      const res = await createPasskeyCredential("ThinPay User");
+      setPasskeyWallet(res.smartAccountAddress, 11155111);
+      toast.success("Passkey Authenticated!", {
+        description: `ERC-4337 Smart Account: ${res.smartAccountAddress.slice(0, 10)}...`,
+      });
+    } catch (err: any) {
+      toast.error("Passkey authentication failed", { description: err?.message });
+    } finally {
+      setPasskeyLoading(false);
+    }
+  };
 
   // Deduplicate connectors by name (prevents duplicate entries from EIP-6963 + injected)
   const uniqueConnectors = React.useMemo(() => {
@@ -107,13 +129,17 @@ export function ConnectWalletModal() {
             <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-500 font-medium">Account Type</span>
-                {isDemo ? (
+                {isPasskey ? (
+                  <Badge variant="cyan" className="text-[10px] bg-purple-50 text-purple-700 border-purple-200">
+                    <Fingerprint className="h-3 w-3 mr-1" /> Passkey Smart Account (ERC-4337)
+                  </Badge>
+                ) : isDemo ? (
                   <Badge variant="cyan" className="text-[10px]">
-                    <Sparkles className="h-3 w-3 mr-1" /> 1-Click Demo Wallet
+                    <Sparkles className="h-3 w-3 mr-1" /> 1-Click Demo Smart Wallet
                   </Badge>
                 ) : (
                   <Badge variant="default" className="text-[10px]">
-                    Injected Web3
+                    Injected Web3 EOA
                   </Badge>
                 )}
               </div>
@@ -167,6 +193,35 @@ export function ConnectWalletModal() {
                   <KeyRound className="h-4 w-4 mr-2" />
                 )}
                 Launch Instant Demo
+              </Button>
+            </div>
+
+            {/* ERC-4337 Passkey Option */}
+            <div className="rounded-2xl border border-purple-200 bg-purple-50/60 p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 font-semibold text-purple-900 text-sm">
+                  <Fingerprint className="h-4 w-4 text-purple-600" />
+                  Passkey Smart Account (ERC-4337)
+                </div>
+                <Badge variant="cyan" className="text-[10px] bg-purple-100 text-purple-800 border-purple-200">
+                  Biometric
+                </Badge>
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Log in via Touch ID, Face ID, or Windows Hello. Gas-sponsored smart account.
+              </p>
+              <Button
+                variant="secondary"
+                className="w-full mt-2 bg-white hover:bg-purple-50 border-purple-200 text-purple-900 font-semibold"
+                onClick={handlePasskeyConnect}
+                disabled={passkeyLoading}
+              >
+                {passkeyLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Fingerprint className="h-4 w-4 mr-2 text-purple-600" />
+                )}
+                Sign In with Passkey / Biometrics
               </Button>
             </div>
 

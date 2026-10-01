@@ -6,6 +6,7 @@ import { WagmiProvider } from "wagmi";
 import { wagmiConfig } from "@/lib/web3/wagmiConfig";
 import { ConnectWalletModal } from "@/components/wallet/ConnectWalletModal";
 import { SendModal } from "@/components/wallet/SendModal";
+import { BatchSendModal } from "@/components/wallet/BatchSendModal";
 import { ReceiveModal } from "@/components/wallet/ReceiveModal";
 import { CopilotDrawer } from "@/components/ai/CopilotDrawer";
 
@@ -28,6 +29,7 @@ export function Web3Provider({ children }: { children: React.ReactNode }) {
         {children}
         <ConnectWalletModal />
         <SendModal />
+        <BatchSendModal />
         <ReceiveModal />
         <CopilotDrawer />
       </QueryClientProvider>

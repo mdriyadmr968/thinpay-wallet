@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUpRight, Loader2, CheckCircle2, AlertCircle, ExternalLink } from "lucide-react";
+import { ArrowUpRight, Loader2, CheckCircle2, AlertCircle, ExternalLink, Zap, Layers } from "lucide-react";
 import { toast } from "sonner";
 
 const EXPLORERS: Record<string, string> = {
@@ -29,7 +29,16 @@ const CHAIN_IDS: Record<string, number> = {
 };
 
 export function SendModal() {
-  const { isSendOpen, setSendOpen, selectedNetwork, sendPrefill, setSendPrefill } = useUiStore();
+  const { 
+    isSendOpen, 
+    setSendOpen, 
+    selectedNetwork, 
+    sendPrefill, 
+    setSendPrefill,
+    isGaslessEnabled,
+    setGaslessEnabled,
+    setBatchSendOpen
+  } = useUiStore();
   const { isConnected, isDemo } = useWalletStore();
   const { address: wagmiAddress, isConnected: isWagmiConnected } = useAccount();
   const { sendTransactionAsync } = useSendTransaction();
@@ -196,15 +205,67 @@ export function SendModal() {
               </div>
             </div>
 
+            {/* ERC-4337 Gasless Paymaster Toggle */}
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className={`h-6 w-6 rounded-lg flex items-center justify-center ${isGaslessEnabled ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-500"}`}>
+                  <Zap className="h-3.5 w-3.5" />
+                </div>
+                <div>
+                  <div className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
+                    ERC-4337 Gasless Mode
+                    {isGaslessEnabled && <Badge variant="default" className="text-[9px] py-0 px-1">Sponsored</Badge>}
+                  </div>
+                  <div className="text-[10px] text-slate-500">
+                    {isGaslessEnabled ? "Gas fee paid by ThinPay Paymaster" : "Gas fee deducted from native balance"}
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setGaslessEnabled(!isGaslessEnabled)}
+                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                  isGaslessEnabled ? "bg-emerald-600" : "bg-slate-300"
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                    isGaslessEnabled ? "translate-x-4" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
+
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-1.5 text-xs text-slate-600">
               <div className="flex justify-between">
                 <span>Network:</span>
                 <span className="text-slate-800 font-mono capitalize font-medium">{selectedNetwork.replace("_", " ")}</span>
               </div>
               <div className="flex justify-between">
+                <span>Estimated Gas:</span>
+                <span className={isGaslessEnabled ? "text-emerald-700 font-bold" : "text-slate-700 font-mono"}>
+                  {isGaslessEnabled ? "0.00 (Sponsored)" : "~0.0004 ETH"}
+                </span>
+              </div>
+              <div className="flex justify-between">
                 <span>Confirmation Time:</span>
                 <span className="text-emerald-700 font-medium">~12 seconds</span>
               </div>
+            </div>
+
+            <div className="pt-1 flex items-center justify-between text-xs">
+              <span className="text-slate-500">Need to send to multiple wallets?</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setSendOpen(false);
+                  setBatchSendOpen(true);
+                }}
+                className="text-purple-700 font-semibold hover:underline inline-flex items-center gap-1 cursor-pointer"
+              >
+                <Layers className="h-3 w-3" />
+                Batch Multi-Send
+              </button>
             </div>
 
             {error && (
