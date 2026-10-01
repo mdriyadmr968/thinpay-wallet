@@ -7,6 +7,7 @@ import walletRoutes from './routes/walletRoutes';
 import swapRoutes from './routes/swapRoutes';
 import transactionRoutes from './routes/transactionRoutes';
 import aiRoutes from './routes/aiRoutes';
+import faucetRoutes from './routes/faucetRoutes';
 import { yoga } from './graphql';
 import { errorHandler } from './middleware/errorHandler';
 
@@ -33,6 +34,7 @@ app.use('/api/v1/wallet', walletRoutes);
 app.use('/api/v1/swap', swapRoutes);
 app.use('/api/v1/transaction', transactionRoutes);
 app.use('/api/v1/ai', aiRoutes);
+app.use('/api/v1/faucet', faucetRoutes);
 
 // Health Check
 app.get('/health', (req, res) => {

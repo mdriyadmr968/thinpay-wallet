@@ -6,7 +6,7 @@ import { useUiStore } from "@/stores/use-ui-store";
 import { useWalletStore } from "@/stores/use-wallet-store";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Globe, Wallet, Cpu } from "lucide-react";
+import { Sparkles, Globe, Wallet, Cpu, Droplets } from "lucide-react";
 import { formatAddress } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -19,7 +19,7 @@ export const NETWORKS = [
 ];
 
 export function TopHeader() {
-  const { selectedNetwork, setSelectedNetwork, setCopilotOpen } = useUiStore();
+  const { selectedNetwork, setSelectedNetwork, setCopilotOpen, setFaucetOpen } = useUiStore();
   const { isConnected: isStoreConnected, address: storeAddress, isDemo, setConnectModalOpen } = useWalletStore();
   const { address: wagmiAddress, chainId: activeChainId, isConnected: isWagmiConnected } = useAccount();
   const { switchChainAsync } = useSwitchChain();
@@ -90,6 +90,17 @@ export function TopHeader() {
       </div>
 
       <div className="flex items-center gap-2.5">
+        {/* 1-Click Faucet Trigger */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setFaucetOpen(true)}
+          className="hidden sm:inline-flex border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100/80 shadow-2xs font-semibold cursor-pointer"
+        >
+          <Droplets className="h-3.5 w-3.5 text-emerald-600 mr-1.5" />
+          Faucet
+        </Button>
+
         {/* Quick Gemini Copilot trigger */}
         <Button
           variant="outline"

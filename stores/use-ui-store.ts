@@ -13,6 +13,7 @@ interface UiState {
   isMobileNavOpen: boolean;
   isGaslessEnabled: boolean;
   isBatchSendOpen: boolean;
+  isFaucetOpen: boolean;
   selectedNetwork: string; // e.g. 'sepolia', 'amoy', 'bsc_testnet', 'base_sepolia', 'solana_devnet'
   sendPrefill: SendPrefillData | null;
   setSendOpen: (open: boolean) => void;
@@ -21,6 +22,7 @@ interface UiState {
   setMobileNavOpen: (open: boolean) => void;
   setGaslessEnabled: (enabled: boolean) => void;
   setBatchSendOpen: (open: boolean) => void;
+  setFaucetOpen: (open: boolean) => void;
   setSelectedNetwork: (network: string) => void;
   setSendPrefill: (data: SendPrefillData | null) => void;
 }
@@ -32,6 +34,7 @@ export const useUiStore = create<UiState>((set) => ({
   isMobileNavOpen: false,
   isGaslessEnabled: true, // Enabled by default for sponsored testnet experience
   isBatchSendOpen: false,
+  isFaucetOpen: false,
   selectedNetwork: "sepolia",
   sendPrefill: null,
   setSendOpen: (open) => set({ isSendOpen: open }),
@@ -40,6 +43,7 @@ export const useUiStore = create<UiState>((set) => ({
   setMobileNavOpen: (open) => set({ isMobileNavOpen: open }),
   setGaslessEnabled: (enabled) => set({ isGaslessEnabled: enabled }),
   setBatchSendOpen: (open) => set({ isBatchSendOpen: open }),
+  setFaucetOpen: (open) => set({ isFaucetOpen: open }),
   setSelectedNetwork: (network) => set({ selectedNetwork: network }),
   setSendPrefill: (data) => set({ sendPrefill: data }),
 }));

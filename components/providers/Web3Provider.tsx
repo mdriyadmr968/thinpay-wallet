@@ -8,6 +8,7 @@ import { ConnectWalletModal } from "@/components/wallet/ConnectWalletModal";
 import { SendModal } from "@/components/wallet/SendModal";
 import { BatchSendModal } from "@/components/wallet/BatchSendModal";
 import { ReceiveModal } from "@/components/wallet/ReceiveModal";
+import { FaucetModal } from "@/components/wallet/FaucetModal";
 import { CopilotDrawer } from "@/components/ai/CopilotDrawer";
 
 export function Web3Provider({ children }: { children: React.ReactNode }) {
@@ -30,6 +31,7 @@ export function Web3Provider({ children }: { children: React.ReactNode }) {
         <ConnectWalletModal />
         <SendModal />
         <BatchSendModal />
+        <FaucetModal />
         <ReceiveModal />
         <CopilotDrawer />
       </QueryClientProvider>

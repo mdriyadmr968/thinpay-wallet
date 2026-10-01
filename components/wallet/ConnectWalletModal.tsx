@@ -5,6 +5,7 @@ import { useConnect, useAccount, useDisconnect, useSignMessage } from "wagmi";
 import { useWalletStore } from "@/stores/use-wallet-store";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Wallet, Sparkles, Check, Copy, ExternalLink, Loader2, KeyRound, Fingerprint } from "lucide-react";
 import { formatAddress } from "@/lib/utils";
 import { getApiUrl } from "@/lib/config";

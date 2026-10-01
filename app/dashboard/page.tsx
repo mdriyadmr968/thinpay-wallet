@@ -16,13 +16,14 @@ import {
   Coins, 
   Layers,
   ChevronRight,
-  Loader2
+  Loader2,
+  Droplets
 } from "lucide-react";
 import Link from "next/link";
 import { formatUsd } from "@/lib/utils";
 
 export default function DashboardPage() {
-  const { setCopilotOpen, setSendOpen, setReceiveOpen } = useUiStore();
+  const { setCopilotOpen, setSendOpen, setReceiveOpen, setFaucetOpen } = useUiStore();
   const { isConnected, address } = useWalletStore();
   const { balances, totalUsd, isLoading } = useTestnetBalances();
 
@@ -45,6 +46,15 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setFaucetOpen(true)}
+            className="text-xs border-sky-300 bg-sky-50 text-sky-800 hover:bg-sky-100 shadow-2xs font-semibold cursor-pointer"
+          >
+            <Droplets className="h-3.5 w-3.5 mr-1 text-sky-600" />
+            1-Click Faucet
+          </Button>
           <Button 
             variant="outline" 
             size="sm" 
@@ -87,11 +97,11 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="pt-4">
             {/* Action Buttons */}
-            <div className="grid grid-cols-4 gap-2 sm:gap-3">
+            <div className="grid grid-cols-5 gap-2 sm:gap-2.5">
               <Button 
                 variant="secondary" 
                 onClick={() => setSendOpen(true)}
-                className="flex-col h-auto py-3 px-2 gap-1 rounded-xl bg-slate-50 border border-slate-200/80 hover:bg-slate-100 text-slate-800 shadow-2xs cursor-pointer"
+                className="flex-col h-auto py-3 px-1.5 gap-1 rounded-xl bg-slate-50 border border-slate-200/80 hover:bg-slate-100 text-slate-800 shadow-2xs cursor-pointer"
               >
                 <ArrowUpRight className="h-5 w-5 text-emerald-600" />
                 <span className="text-xs font-semibold">Send</span>
@@ -99,19 +109,27 @@ export default function DashboardPage() {
               <Button 
                 variant="secondary" 
                 onClick={() => setReceiveOpen(true)}
-                className="flex-col h-auto py-3 px-2 gap-1 rounded-xl bg-slate-50 border border-slate-200/80 hover:bg-slate-100 text-slate-800 shadow-2xs cursor-pointer"
+                className="flex-col h-auto py-3 px-1.5 gap-1 rounded-xl bg-slate-50 border border-slate-200/80 hover:bg-slate-100 text-slate-800 shadow-2xs cursor-pointer"
               >
                 <ArrowDownLeft className="h-5 w-5 text-sky-600" />
                 <span className="text-xs font-semibold">Receive</span>
               </Button>
+              <Button 
+                variant="secondary" 
+                onClick={() => setFaucetOpen(true)}
+                className="flex-col h-auto py-3 px-1.5 gap-1 rounded-xl bg-sky-50/70 border border-sky-200/90 hover:bg-sky-100 text-sky-900 shadow-2xs cursor-pointer"
+              >
+                <Droplets className="h-5 w-5 text-sky-600" />
+                <span className="text-xs font-semibold">Faucet</span>
+              </Button>
               <Link href="/swap" className="w-full">
-                <Button variant="secondary" className="w-full flex-col h-auto py-3 px-2 gap-1 rounded-xl bg-slate-50 border border-slate-200/80 hover:bg-slate-100 text-slate-800 shadow-2xs cursor-pointer">
+                <Button variant="secondary" className="w-full flex-col h-auto py-3 px-1.5 gap-1 rounded-xl bg-slate-50 border border-slate-200/80 hover:bg-slate-100 text-slate-800 shadow-2xs cursor-pointer">
                   <ArrowLeftRight className="h-5 w-5 text-amber-600" />
                   <span className="text-xs font-semibold">Swap</span>
                 </Button>
               </Link>
               <Link href="/baskets" className="w-full">
-                <Button variant="secondary" className="w-full flex-col h-auto py-3 px-2 gap-1 rounded-xl bg-slate-50 border border-slate-200/80 hover:bg-slate-100 text-slate-800 shadow-2xs cursor-pointer">
+                <Button variant="secondary" className="w-full flex-col h-auto py-3 px-1.5 gap-1 rounded-xl bg-slate-50 border border-slate-200/80 hover:bg-slate-100 text-slate-800 shadow-2xs cursor-pointer">
                   <Layers className="h-5 w-5 text-purple-600" />
                   <span className="text-xs font-semibold">Baskets</span>
                 </Button>

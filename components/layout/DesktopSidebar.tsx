@@ -10,9 +10,12 @@ import {
   Gift, 
   ShieldCheck, 
   Sparkles,
+  Droplets,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useUiStore } from "@/stores/use-ui-store";
 
 const navItems = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
@@ -25,6 +28,7 @@ const navItems = [
 
 export function DesktopSidebar() {
   const pathname = usePathname();
+  const { setFaucetOpen } = useUiStore();
 
   return (
     <aside className="hidden md:flex flex-col w-64 border-r border-slate-200/90 bg-white/90 backdrop-blur-xl h-screen sticky top-0 shrink-0 select-none z-30 shadow-2xs">
@@ -70,6 +74,19 @@ export function DesktopSidebar() {
           );
         })}
       </nav>
+
+      {/* 1-Click Faucet Trigger Button */}
+      <div className="px-3 pb-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setFaucetOpen(true)}
+          className="w-full justify-start gap-2.5 text-xs text-sky-700 bg-sky-50/80 hover:bg-sky-100 border-sky-200 shadow-2xs font-semibold cursor-pointer"
+        >
+          <Droplets className="h-4 w-4 text-sky-600" />
+          <span>1-Click Testnet Faucet</span>
+        </Button>
+      </div>
 
       {/* Testnet Status Footer */}
       <div className="p-4 border-t border-slate-200/80 bg-slate-50/60">
