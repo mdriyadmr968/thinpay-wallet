@@ -33,3 +33,9 @@ Welcome to the comprehensive technical documentation for the ThinPay Web3 DeFi p
    - Network directory (Sepolia, Amoy, BSC Testnet, Base Sepolia, Solana Devnet)
    - RPC endpoints, chain IDs, and block explorers
    - Faucet acquisition guide and built-in drip aggregator
+
+6. [Production Deployment Guide (`DEPLOYMENT.md`)](./DEPLOYMENT.md)
+   - Deploying Next.js frontend to Vercel
+   - Deploying Express & GraphQL backend to Railway or Render
+   - Neon Serverless PostgreSQL connection and migration
+   - Post-deployment verification checklist and CORS troubleshooting

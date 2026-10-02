@@ -22,7 +22,23 @@ app.use(
     contentSecurityPolicy: false, // Allows GraphiQL playground in development
   })
 );
-app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:3000', credentials: true }));
+const allowedOrigins = process.env.CORS_ORIGIN 
+  ? process.env.CORS_ORIGIN.split(',').map(s => s.trim()) 
+  : ['http://localhost:3000', 'https://localhost:3000'];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, server-to-server)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes('*') || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+        return callback(null, true);
+      }
+      return callback(null, true); // Permissive testnet API fallback
+    },
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 // GraphQL Yoga Endpoint
